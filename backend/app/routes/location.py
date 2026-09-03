@@ -73,7 +73,7 @@ def search_locations(q: str = Query(..., description="Query location text or coo
             lat = float(parts[0].strip())
             lon = float(parts[1].strip())
             resolved_loc = {
-                "name": f"📍 GPS ({lat:.2f}°, {lon:.2f}°)",
+                "name": f"GPS ({lat:.2f}°, {lon:.2f}°)",
                 "state": "Live Coordinates",
                 "country": "India",
                 "lat": lat,

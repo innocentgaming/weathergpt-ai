@@ -90,51 +90,40 @@ def detect_language(query: str) -> str:
 
 
 def extract_location(query: str, lang: str = "en", default_location: Optional[str] = None) -> str:
-    """Dynamically extracts target location from query, geocodes candidates, or uses default_location."""
+    """Dynamically extracts target location from query, adhering to user's active/GPS location when no new city is specified."""
     q_lower = query.lower()
+    clean_default = default_location.strip() if default_location else None
     
-    # 1. Match known cities
-    for city in KNOWN_CITIES:
-        if city in q_lower:
-            return city
-            
-    # 2. Check localized names (e.g. पुणे, मुंबई)
+    # 1. Check localized names (e.g. पुणे, मुंबई)
     for lang_code in KEYWORDS_LANG:
         for eng_name, local_name in KEYWORDS_LANG[lang_code].items():
             if local_name in query:
                 return eng_name
 
-    # 3. Regex extraction for pattern "in <city>", "for <city>", "at <city>", "weather in <city>"
-    match = re.search(r'\b(?:in|at|for|near|around)\s+([a-zA-Z]{3,20})\b', q_lower)
+    # 2. Regex extraction for explicit new location intent: "in <city>", "for <city>", "at <city>", "near <city>"
+    match = re.search(r'\b(?:in|at|for|near|around|to)\s+([a-zA-Z]{3,20})\b', q_lower)
     if match:
         extracted = match.group(1).strip()
-        if extracted not in ["today", "tomorrow", "this", "next", "the", "detail", "details", "forecast"]:
+        non_places = {
+            "today", "tomorrow", "tonight", "morning", "afternoon", "evening",
+            "this", "next", "the", "detail", "details", "forecast", "weather",
+            "rain", "now", "here", "current", "hours", "days", "week", "future",
+            "general", "farmer", "travel", "traveller", "school", "info", "update"
+        }
+        if extracted not in non_places:
             return extracted
 
-    # 4. Check candidate words in query for Open-Meteo geocoding resolution
-    words = [w.strip() for w in re.split(r'[\s,]+', query) if w.strip()]
-    stop_words = {
-        "will", "shall", "can", "could", "would", "should", "does", "do", "did", "is", "are", "am", "was", "were",
-        "it", "what", "how", "why", "when", "where", "weather", "forecast", "rain", "rainy", "monsoon", "shower", "drizzle",
-        "today", "tomorrow", "in", "the", "for", "at", "idea", "good", "bad", "temp", "temperature", "hello", "hi", "hey",
-        "tell", "me", "give", "show", "please", "thanks", "thank", "you", "city", "place", "state", "now", "current"
-    }
-    candidate_words = [w for w in words if w.lower() not in stop_words and len(w) >= 3]
-    
-    for candidate in candidate_words[:1]:
-        try:
-            geo_res = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={candidate}&count=1", timeout=1.0)
-            geo_data = geo_res.json()
-            if geo_data and "results" in geo_data and geo_data["results"]:
-                return candidate
-        except Exception:
-            pass
+    # 3. Match known cities explicitly mentioned in query
+    for city in KNOWN_CITIES:
+        if re.search(r'\b' + re.escape(city) + r'\b', q_lower):
+            return city
 
-    # 5. Fallback to default_location if passed from frontend active city, else 'pune'
-    if default_location and default_location.strip():
-        return default_location.strip()
-        
+    # 4. If user already has an active default location (GPS coordinates or active city), adhere to it!
+    if clean_default:
+        return clean_default
+
     return "pune"
+
 
 
 def get_local_nlp_response(query: str, db: Session, role: str, lang: str, default_location: Optional[str] = None) -> Dict[str, Any]:
@@ -445,26 +434,30 @@ Risk Assessment:
                 "frequency_penalty": 0.3,
                 "presence_penalty": 0.3
             }
-            res = _AI_HTTP_SESSION.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=12.0)
+            res = _AI_HTTP_SESSION.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=6.0)
             if res.status_code == 200:
                 res_data = res.json()
-                answer_text = clean_markdown_response(res_data["choices"][0]["message"]["content"].strip())
-                key_label = "Primary" if key_idx == 0 else "Secondary"
-                resp_payload = {
-                    "answer_text": answer_text,
-                    "data_sources": weather_data["current"]["source"],
-                    "confidence_note": f"Grounded via AI Copilot ({model_name} • {key_label} Key).",
-                    "alert_level": risk_data["category"],
-                    "metadata": {
-                        "type": "weather",
-                        "weather_details": weather_data,
-                        "risk_details": risk_data
-                    }
-                }
-                _AI_CHAT_CACHE[cache_key] = {"data": resp_payload, "expires_at": now_ts + 300}
-                return resp_payload
+                choices = res_data.get("choices", [])
+                if choices:
+                    msg_obj = choices[0].get("message", {})
+                    raw_content = msg_obj.get("content") or msg_obj.get("reasoning") or ""
+                    if raw_content and isinstance(raw_content, str) and raw_content.strip():
+                        answer_text = clean_markdown_response(raw_content.strip())
+                        key_label = "Primary" if key_idx == 0 else "Secondary"
+                        resp_payload = {
+                            "answer_text": answer_text,
+                            "data_sources": weather_data["current"]["source"],
+                            "confidence_note": f"Grounded via AI Copilot ({model_name} • {key_label} Key).",
+                            "alert_level": risk_data["category"],
+                            "metadata": {
+                                "type": "weather",
+                                "weather_details": weather_data,
+                                "risk_details": risk_data
+                            }
+                        }
+                        _AI_CHAT_CACHE[cache_key] = {"data": resp_payload, "expires_at": now_ts + 300}
+                        return resp_payload
             elif res.status_code in [401, 403]:
-                # Invalid or unauthorized key
                 if key_idx == 0:
                     openrouter_key = None
                 else:
@@ -475,11 +468,11 @@ Risk Assessment:
         except Exception as e:
             print(f"OpenRouter Key {key_idx+1} generation error: {e}")
 
-    # 3. Try Gemini as secondary AI provider
+    # 3. Try Gemini as secondary AI provider with strict 4s timeout
     if GEMINI_AVAILABLE and client:
         try:
-            model_name = settings.GEMINI_MODEL or "gemini-3.6-flash"
-            # For Gemini, combine all messages into a single prompt
+            import concurrent.futures
+            model_name = settings.GEMINI_MODEL or "gemini-2.0-flash"
             gemini_prompt = system_message + "\n\n"
             if conversation_history:
                 for msg in conversation_history[-10:]:
@@ -487,27 +480,27 @@ Risk Assessment:
                     gemini_prompt += f"{role_label}: {msg.get('content', '')}\n"
             gemini_prompt += f'User: "{query}"\n\nReturn a clear, well-formatted response with practical insights.'
             
-            response = client.models.generate_content(
-                model=model_name,
-                contents=gemini_prompt,
-            )
-            answer_text = clean_markdown_response(response.text.strip())
-            resp_payload = {
-                "answer_text": answer_text,
-                "data_sources": weather_data["current"]["source"],
-                "confidence_note": f"Grounded via Gemini ({model_name}).",
-                "alert_level": risk_data["category"],
-                "metadata": {
-                    "type": "weather",
-                    "weather_details": weather_data,
-                    "risk_details": risk_data
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(client.models.generate_content, model=model_name, contents=gemini_prompt)
+                response = future.result(timeout=4.0)
+                
+            if response and response.text:
+                answer_text = clean_markdown_response(response.text.strip())
+                resp_payload = {
+                    "answer_text": answer_text,
+                    "data_sources": weather_data["current"]["source"],
+                    "confidence_note": f"Grounded via Gemini ({model_name}).",
+                    "alert_level": risk_data["category"],
+                    "metadata": {
+                        "type": "weather",
+                        "weather_details": weather_data,
+                        "risk_details": risk_data
+                    }
                 }
-            }
-            _AI_CHAT_CACHE[cache_key] = {"data": resp_payload, "expires_at": now_ts + 300}
-            return resp_payload
+                _AI_CHAT_CACHE[cache_key] = {"data": resp_payload, "expires_at": now_ts + 300}
+                return resp_payload
         except Exception as e:
-            GEMINI_AVAILABLE = False
-            print(f"Gemini generation error: {e}. Temporarily falling back to dynamic local NLP.")
+            print(f"Gemini generation error: {e}. Falling back to dynamic local NLP.")
 
     # 4. Fallback to dynamic local NLP
     resp = get_local_nlp_response(query, db, role, lang, default_location=location_override)

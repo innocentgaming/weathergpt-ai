@@ -422,6 +422,9 @@ export default function WeatherGPT() {
         if (data.weather?.coordinates?.lat && data.weather?.coordinates?.lon) {
           setMapCenter([data.weather.coordinates.lat, data.weather.coordinates.lon]);
         }
+        if (loc.includes(',') && data.weather?.location) {
+          setSearchLocation(data.weather.location);
+        }
         
         // Cache to local storage
         localStorage.setItem(`weather_cache_${loc.toLowerCase()}`, JSON.stringify(data));
