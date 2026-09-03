@@ -35,11 +35,10 @@ A next-generation, multilingual, offline-resilient weather intelligence and disa
 10. [Environment Variables & Configuration](#-environment-variables--configuration)
 11. [Quick Start & Local Setup](#-quick-start--local-setup)
 12. [Docker Deployment](#-docker-deployment)
-13. [Production Deployment (Render & Vercel)](#-production-deployment-render--vercel)
-14. [Automated Testing & Quality Assurance](#-automated-testing--quality-assurance)
-15. [Presentation & Demo Flow](#-presentation--demo-flow)
-16. [Security & Responsible AI](#-security--responsible-ai)
-17. [License & Acknowledgments](#-license--acknowledgments)
+13. [Automated Testing & Quality Assurance](#-automated-testing--quality-assurance)
+14. [Presentation & Demo Flow](#-presentation--demo-flow)
+15. [Security & Responsible AI](#-security--responsible-ai)
+16. [License & Acknowledgments](#-license--acknowledgments)
 
 ---
 
@@ -594,33 +593,6 @@ docker-compose down
 
 ---
 
-## ☁️ Production Deployment (Render & Vercel)
-
-### Deploying via Render Blueprint (`render.yaml`)
-WeatherGPT includes a pre-configured `render.yaml` infrastructure-as-code file:
-1. Fork or push this repository to GitHub.
-2. Go to your [Render Dashboard](https://dashboard.render.com).
-3. Click **New +** $\to$ **Blueprint**.
-4. Connect your GitHub repository.
-5. Render will automatically detect `render.yaml` and provision:
-   - A managed **PostgreSQL Database** (`weathergpt-db`).
-   - A **FastAPI Web Service** (`weathergpt-backend`).
-   - A **Next.js Web Service** (`weathergpt-frontend`).
-6. Set your optional secret keys (`GEMINI_API_KEY`, etc.) in the Render Environment settings.
-
-### Split Deployment (Vercel Frontend + Render Backend)
-- **Frontend (Vercel)**:
-  - Import the `frontend/` directory into Vercel.
-  - Set Environment Variables:
-    - `NEXT_PUBLIC_API_URL` = `https://your-backend.onrender.com`
-    - `NEXT_PUBLIC_WS_URL` = `wss://your-backend.onrender.com`
-- **Backend (Render / Railway / Fly.io)**:
-  - Deploy `backend/` with start command:
-    ```bash
-    uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    ```
-
----
 
 ## 🧪 Automated Testing & Quality Assurance
 
