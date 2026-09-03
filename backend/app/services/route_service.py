@@ -29,17 +29,34 @@ def analyze_route_weather(db: Session, from_location: str, to_location: str) -> 
         # Generate a general fallback route with source, midpoint, and destination
         waypoints = [from_location.title(), f"Midway to {to_location.title()}", to_location.title()]
 
+    from concurrent.futures import ThreadPoolExecutor
+    from app.database import SessionLocal
+
+    def fetch_point_weather(point: str):
+        thread_db = SessionLocal()
+        try:
+            w_data = get_weather(thread_db, point)
+            r_data = calculate_weather_risk(w_data)
+            return point, w_data, r_data
+        except Exception:
+            # Safe offline fallback for waypoint
+            w_data = get_weather(thread_db, "pune")
+            r_data = calculate_weather_risk(w_data)
+            return point, w_data, r_data
+        finally:
+            thread_db.close()
+
+    # Parallelize waypoint weather fetching
+    with ThreadPoolExecutor(max_workers=min(len(waypoints), 6)) as executor:
+        waypoint_results = list(executor.map(fetch_point_weather, waypoints))
+
     timeline = []
     highest_risk = "LOW"
     risk_level_values = {"LOW": 1, "WATCH": 2, "MODERATE": 2, "HIGH": 3, "SEVERE": 4}
     highest_risk_num = 1
     severe_points = []
     
-    for i, point in enumerate(waypoints):
-        # Fetch weather for the waypoint
-        w_data = get_weather(db, point)
-        risk_data = calculate_weather_risk(w_data)
-        
+    for point, w_data, risk_data in waypoint_results:
         risk_lvl = risk_data["category"]
         risk_num = risk_level_values.get(risk_lvl, 1)
         if risk_num > highest_risk_num:

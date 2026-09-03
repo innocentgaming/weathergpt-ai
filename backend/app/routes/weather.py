@@ -50,3 +50,45 @@ def get_climate_endpoint(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+from typing import List, Dict, Any
+from pydantic import BaseModel
+from concurrent.futures import ThreadPoolExecutor
+from app.database import SessionLocal
+
+class BatchWeatherRequest(BaseModel):
+    locations: List[str]
+
+@router.post("/batch")
+def get_batch_weather_endpoint(req: BatchWeatherRequest):
+    """
+    Fetches weather & risk scores for multiple locations concurrently in parallel.
+    Massively accelerates map rendering and dashboard marker initialization.
+    """
+    def fetch_single(loc: str) -> Dict[str, Any]:
+        thread_db = SessionLocal()
+        try:
+            w_data = get_weather(thread_db, loc)
+            r_data = calculate_weather_risk(w_data)
+            return {
+                "location": loc,
+                "weather": w_data,
+                "risk": r_data,
+                "success": True
+            }
+        except Exception as err:
+            return {
+                "location": loc,
+                "error": str(err),
+                "success": False
+            }
+        finally:
+            thread_db.close()
+
+    max_workers = min(len(req.locations), 8) if req.locations else 1
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        results = list(executor.map(fetch_single, req.locations))
+
+    return {"results": results, "count": len(results)}
+

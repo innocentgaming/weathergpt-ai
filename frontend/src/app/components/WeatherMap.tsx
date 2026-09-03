@@ -120,6 +120,61 @@ export default function WeatherMap({
           });
         }
 
+        // 1. Try ultra-fast batch endpoint first (single HTTP request for all markers)
+        try {
+          const batchRes = await fetch(`${BACKEND_URL}/api/weather/batch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ locations: targetList.map(l => l.name) })
+          });
+          if (batchRes.ok) {
+            const batchData = await batchRes.json();
+            const resultMap = new Map<string, any>();
+            (batchData.results || []).forEach((r: any) => {
+              if (r.success) {
+                resultMap.set(r.location.toLowerCase(), r);
+              }
+            });
+
+            const updated = targetList.map((loc) => {
+              const resObj = resultMap.get(loc.name.toLowerCase());
+              if (resObj && resObj.weather) {
+                const curr = resObj.weather.current || {};
+                const rData = resObj.risk || {};
+                const coords = resObj.weather.coordinates || {};
+                const score = rData.score || 35;
+                
+                let col = "green";
+                let rLvl = "LOW";
+                if (score > 75) { col = "red"; rLvl = "SEVERE"; }
+                else if (score > 50) { col = "orange"; rLvl = "HIGH"; }
+                else if (score > 25) { col = "amber"; rLvl = "MODERATE"; }
+
+                return {
+                  ...loc,
+                  lat: coords.lat || loc.lat,
+                  lon: coords.lon || loc.lon,
+                  temp: `${curr.temp ?? 27}°C`,
+                  condition: curr.condition || loc.condition,
+                  wind_speed: `${curr.wind_speed ?? 15} km/h`,
+                  rain_prob: `${curr.rain_probability ?? 40}%`,
+                  risk: rLvl,
+                  color: col
+                };
+              }
+              return loc;
+            });
+
+            if (isMounted) {
+              setMapLocations(updated);
+            }
+            return;
+          }
+        } catch {
+          // Batch fetch error, proceed to per-item fallback below
+        }
+
+        // 2. Per-marker fallback
         const updated = await Promise.all(
           targetList.map(async (loc) => {
             try {

@@ -453,7 +453,7 @@ Risk Assessment:
                 "frequency_penalty": 0.3,
                 "presence_penalty": 0.3
             }
-            res = _AI_HTTP_SESSION.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=6.0)
+            res = _AI_HTTP_SESSION.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=4.0)
             if res.status_code == 200:
                 res_data = res.json()
                 choices = res_data.get("choices", [])
