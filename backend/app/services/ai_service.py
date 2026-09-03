@@ -73,18 +73,26 @@ KEYWORDS_LANG = {
 
 
 def detect_language(query: str) -> str:
-    """Detects if user is querying in Marathi, Hindi, or English (basic heuristic)."""
+    """Detects if user is querying in Marathi, Hindi, or English (Devanagari or Romanized)."""
     q_lower = query.lower()
     
-    # Marathi checks
-    mr_words = ["पाऊस", "पुण्यात", "उद्या", "का", "तापमान", "पिके", "शेतकरी", "प्रवास", "लोणावळा", "पाणी"]
-    if any(w in q_lower for w in mr_words):
-        return "mr"
+    # Marathi checks (Devanagari and common Romanized Marathi keywords)
+    mr_words = [
+        "पाऊस", "पुण्यात", "उद्या", "का", "तापमान", "पिके", "शेतकरी", "प्रवास", "लोणावळा", "पाणी", "हवामान",
+        "paus", "paaus", "udya", "kiti", "ahe", "aahe", "sang", "sheti", "pani", "havaman", "padel", "padnar"
+    ]
+    for w in mr_words:
+        if (re.search(r'\b' + re.escape(w) + r'\b', q_lower) if w.isascii() else w in q_lower):
+            return "mr"
         
-    # Hindi checks
-    hi_words = ["बारिश", "मौसम", "क्या", "कल", "तापमान", "खेती", "सिंचाई", "यात्रा", "रास्ता", "पानी"]
-    if any(w in q_lower for w in hi_words):
-        return "hi"
+    # Hindi checks (Devanagari and common Romanized Hindi keywords)
+    hi_words = [
+        "बारिश", "मौसम", "क्या", "कल", "तापमान", "खेती", "सिंचाई", "यात्रा", "रास्ता", "पानी", "कैसा", "होगी", "होगा", "बताओ",
+        "barish", "baarish", "mausam", "kaisa", "hogi", "hoga", "kya", "kal", "aaj", "batao", "khet", "sichai", "tapman"
+    ]
+    for w in hi_words:
+        if (re.search(r'\b' + re.escape(w) + r'\b', q_lower) if w.isascii() else w in q_lower):
+            return "hi"
         
     return "en"
 
@@ -371,10 +379,21 @@ def generate_chat_response(
             "conditions, forecasts, travel safety, and simple safety measures."
         )
 
+    # Build language enforcement rule
+    if lang == "hi":
+        lang_instruction = "- MANDATORY LANGUAGE: You MUST respond strictly in Hindi (हिंदी) using Devanagari script. Do not respond in English."
+        lang_user_prompt = f'User Question: "{query}"\n\nमहत्वपूर्ण निर्देश: कृपया अपना पूरा उत्तर केवल हिंदी (हिंदी) में देवनागरी लिपि में दें।'
+    elif lang == "mr":
+        lang_instruction = "- MANDATORY LANGUAGE: You MUST respond strictly in Marathi (मराठी) using Devanagari script. Do not respond in English."
+        lang_user_prompt = f'User Question: "{query}"\n\nमहत्त्वाची सूचना: कृपया आपले संपूर्ण उत्तर फक्त मराठीत (मराठी) देवनागरी लिपीमध्ये द्या.'
+    else:
+        lang_instruction = "- Language: Respond in clear English."
+        lang_user_prompt = f'User Question: "{query}"\n\nReturn a clear, well-formatted response with practical insights.'
+
     # Build system message with weather data
     system_message = f"""System instructions:
 - You are WeatherGPT, a conversational AI weather copilot developed for India Meteorological Department (IMD).
-- Translate and answer in the language requested: {lang} (mr = Marathi, hi = Hindi, en = English).
+{lang_instruction}
 - Ground ALL weather assertions strictly in the provided live meteorological data.
 - NEVER invent weather metrics or alerts.
 - Distinguish between observation and forecast.
@@ -402,8 +421,8 @@ Risk Assessment:
                 "content": msg.get("content", "")
             })
     
-    # Add current query
-    messages.append({"role": "user", "content": f'User Question: "{query}"\n\nReturn a clear, well-formatted response with practical insights.'})
+    # Add current query with language prompt
+    messages.append({"role": "user", "content": lang_user_prompt})
 
     cache_key = f"{query.strip().lower()}_{role}_{lang}_{location_override or ''}"
     now_ts = time.time()

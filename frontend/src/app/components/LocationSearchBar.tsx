@@ -18,6 +18,7 @@ interface LocationSearchBarProps {
   onSelectLocation: (location: LocationItem) => void;
   onUseGps: () => void;
   isGpsLoading?: boolean;
+  placeholder?: string;
 }
 
 const POPULAR_HUBS: LocationItem[] = [
@@ -41,6 +42,7 @@ export default function LocationSearchBar({
   onSelectLocation,
   onUseGps,
   isGpsLoading = false,
+  placeholder,
 }: LocationSearchBarProps) {
   const [query, setQuery] = useState<string>('');
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -205,7 +207,7 @@ export default function LocationSearchBar({
           onChange={handleInputChange}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder={`Search any place (e.g. Pune, Jaipur, Delhi, Shimla)... [Current: ${currentLocation}]`}
+          placeholder={placeholder || `Search any place (e.g. Pune, Jaipur, Delhi, Shimla)... [Current: ${currentLocation}]`}
           className="w-full bg-transparent py-2.5 pr-8 text-xs font-semibold text-slate-100 placeholder:text-slate-400 focus:outline-none"
         />
 

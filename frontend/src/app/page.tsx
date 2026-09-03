@@ -361,6 +361,11 @@ export default function WeatherGPT() {
         setCurrentMode(savedMode as any);
       }
 
+      const savedLang = localStorage.getItem('weathergpt_lang') as 'en' | 'hi' | 'mr';
+      if (savedLang && ['en', 'hi', 'mr'].includes(savedLang)) {
+        setCurrentLang(savedLang);
+      }
+
       const win = window as unknown as SpeechRecognitionWindow;
       const SpeechRecognition = win.SpeechRecognition || win.webkitSpeechRecognition;
       if (SpeechRecognition) {
@@ -370,6 +375,29 @@ export default function WeatherGPT() {
       }
     }
   }, []);
+
+  const handleLanguageChange = (newLang: 'en' | 'hi' | 'mr') => {
+    setCurrentLang(newLang);
+    localStorage.setItem('weathergpt_lang', newLang);
+    
+    // Update initial greeting if user hasn't started a full conversation
+    const welcomeMessages = {
+      en: "Hello! I am WeatherGPT, your AI-powered meteorology copilot. How can I help you today?",
+      hi: "नमस्ते! मैं WeatherGPT हूँ, आपका AI मौसम सहायक। आज मैं आपकी क्या मदद कर सकता हूँ?",
+      mr: "नमस्कार! मी WeatherGPT आहे, आपला AI हवामान सहाय्यक. आज मी आपली काय मदत करू शकतो?"
+    };
+    setChatMessages(prev => {
+      if (prev.length <= 1) {
+        return [{
+          id: 1,
+          role: 'assistant',
+          content: welcomeMessages[newLang],
+          created_at: new Date().toISOString()
+        }];
+      }
+      return prev;
+    });
+  };
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -625,18 +653,50 @@ export default function WeatherGPT() {
       const cond = weather?.current?.condition ?? 'Partly Cloudy';
       const rainProb = weather?.current?.rain_probability ?? 30;
       
-      let fallbackText = `[Offline Mode] Currently in ${locDisplay}, temperature is ${temp}°C with ${cond} and rain probability of ${rainProb}%. Operating on local cache.`;
-      
-      if (qLower.includes('rain') || qLower.includes('पाऊस') || qLower.includes('बारिश')) {
-        fallbackText = rainProb > 40
-          ? `[Offline Mode] Rain is expected in ${locDisplay} today (Probability: ${rainProb}%, Condition: ${cond}, Temp: ${temp}°C). Please carry rain gear.`
-          : `[Offline Mode] No significant rain expected in ${locDisplay} today (Rain probability: ${rainProb}%, Condition: ${cond}, Temp: ${temp}°C).`;
-      } else if (qLower.includes('travel') || qLower.includes('route') || qLower.includes('highway') || qLower.includes('drive')) {
-        fallbackText = `[Offline Route Advisory] Weather in ${locDisplay} is ${cond} with ${temp}°C. Visibility is normal. Drive safely and check local conditions.`;
-      } else if (qLower.includes('irrigate') || qLower.includes('crop') || qLower.includes('farm') || currentMode === 'farmer') {
-        fallbackText = rainProb >= 50
-          ? `[Offline Agro Advisory] Rain is expected in ${locDisplay} (${rainProb}%). Delaying irrigation is advised to conserve water and protect soil.`
-          : `[Offline Agro Advisory] Rain probability is low (${rainProb}%) in ${locDisplay}. Safe to proceed with normal crop irrigation.`;
+      let fallbackText = "";
+      const isRainQuery = qLower.includes('rain') || qLower.includes('पाऊस') || qLower.includes('बारिश');
+      const isTravelQuery = qLower.includes('travel') || qLower.includes('route') || qLower.includes('highway') || qLower.includes('drive') || qLower.includes('प्रवास') || qLower.includes('यात्रा');
+      const isAgroQuery = qLower.includes('irrigate') || qLower.includes('crop') || qLower.includes('farm') || qLower.includes('शेती') || qLower.includes('सिंचाई') || currentMode === 'farmer';
+
+      if (currentLang === 'hi') {
+        fallbackText = `[ऑफलाइन मोड] वर्तमान में ${locDisplay} में तापमान ${temp}°C है, स्थिति '${cond}' है और बारिश की संभावना ${rainProb}% है।`;
+        if (isRainQuery) {
+          fallbackText = rainProb > 40
+            ? `[ऑफलाइन मोड] हाँ, आज ${locDisplay} में बारिश होने की संभावना है (${rainProb}%, मौसम: ${cond})। कृपया छाता या रेनकोट साथ रखें।`
+            : `[ऑफलाइन मोड] नहीं, आज ${locDisplay} में भारी बारिश की संभावना नहीं है (बारिश संभावना: ${rainProb}%)।`;
+        } else if (isTravelQuery) {
+          fallbackText = `[ऑफलाइन यात्रा सलाह] ${locDisplay} में मौसम ${cond} और तापमान ${temp}°C है। दृश्यता सामान्य है। सुरक्षित वाहन चलाएं।`;
+        } else if (isAgroQuery) {
+          fallbackText = rainProb >= 50
+            ? `[ऑफलाइन कृषि सलाह] ${locDisplay} में आज बारिश की संभावना ${rainProb}% है। जलभराव रोकने के लिए सिंचाई टालने की सलाह दी जाती है।`
+            : `[ऑफलाइन कृषि सलाह] ${locDisplay} में बारिश की संभावना कम है (${rainProb}%)। आप फसलों की सामान्य सिंचाई कर सकते हैं।`;
+        }
+      } else if (currentLang === 'mr') {
+        fallbackText = `[ऑफलाइन मोड] सध्या ${locDisplay} मध्ये तापमान ${temp}°C असून हवामान '${cond}' आणि पावसाची शक्यता ${rainProb}% आहे.`;
+        if (isRainQuery) {
+          fallbackText = rainProb > 40
+            ? `[ऑफलाइन मोड] होय, आज ${locDisplay} मध्ये पावसाची शक्यता आहे (${rainProb}%, हवामान: ${cond})। कृपया छत्री सोबत ठेवा.`
+            : `[ऑफलाइन मोड] नाही, आज ${locDisplay} मध्ये मुसळधार पावसाची शक्यता नाही (पावसाची शक्यता: ${rainProb}%).`;
+        } else if (isTravelQuery) {
+          fallbackText = `[ऑफलाइन प्रवास सल्ला] ${locDisplay} मध्ये हवामान ${cond} आणि तापमान ${temp}°C आहे. दृश्यता सामान्य आहे. काळजीपूर्वक वाहन चालवा.`;
+        } else if (isAgroQuery) {
+          fallbackText = rainProb >= 50
+            ? `[ऑफलाइन कृषी सल्ला] ${locDisplay} मध्ये पावसाची शक्यता ${rainProb}% आहे. पिकांमध्ये पाणी साचू नये म्हणून सिंचन पुढे ढकलावे.`
+            : `[ऑफलाइन कृषी सल्ला] ${locDisplay} मध्ये पावसाची शक्यता कमी आहे (${rainProb}%). पिकांना नियमित पाणी देऊ शकता.`;
+        }
+      } else {
+        fallbackText = `[Offline Mode] Currently in ${locDisplay}, temperature is ${temp}°C with ${cond} and rain probability of ${rainProb}%. Operating on local cache.`;
+        if (isRainQuery) {
+          fallbackText = rainProb > 40
+            ? `[Offline Mode] Rain is expected in ${locDisplay} today (Probability: ${rainProb}%, Condition: ${cond}, Temp: ${temp}°C). Please carry rain gear.`
+            : `[Offline Mode] No significant rain expected in ${locDisplay} today (Rain probability: ${rainProb}%, Condition: ${cond}, Temp: ${temp}°C).`;
+        } else if (isTravelQuery) {
+          fallbackText = `[Offline Route Advisory] Weather in ${locDisplay} is ${cond} with ${temp}°C. Visibility is normal. Drive safely and check local conditions.`;
+        } else if (isAgroQuery) {
+          fallbackText = rainProb >= 50
+            ? `[Offline Agro Advisory] Rain is expected in ${locDisplay} (${rainProb}%). Delaying irrigation is advised to conserve water and protect soil.`
+            : `[Offline Agro Advisory] Rain probability is low (${rainProb}%) in ${locDisplay}. Safe to proceed with normal crop irrigation.`;
+        }
       }
 
       const assistantMsg: ChatMessage = {
@@ -937,6 +997,7 @@ export default function WeatherGPT() {
             {/* Location Autocomplete Search Bar */}
             <LocationSearchBar
               currentLocation={weather?.location || searchLocation}
+              placeholder={text.placeholder_search}
               onSelectLocation={(locItem: LocationItem) => {
                 setSearchLocation(locItem.name);
                 if (locItem.lat && locItem.lon) {
@@ -975,22 +1036,22 @@ export default function WeatherGPT() {
             {/* Language Selection */}
             <div className="flex bg-slate-900 border border-slate-800 rounded-xl p-0.5 shadow-md">
               <button 
-                onClick={() => setCurrentLang('en')} 
+                onClick={() => handleLanguageChange('en')} 
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${currentLang === 'en' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
               >
                 EN
               </button>
               <button 
-                onClick={() => setCurrentLang('hi')} 
+                onClick={() => handleLanguageChange('hi')} 
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${currentLang === 'hi' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                हिं
+                हिन्दी
               </button>
               <button 
-                onClick={() => setCurrentLang('mr')} 
+                onClick={() => handleLanguageChange('mr')} 
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition ${currentLang === 'mr' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
               >
-                मरा
+                मराठी
               </button>
             </div>
 
@@ -2025,24 +2086,70 @@ export default function WeatherGPT() {
 
               {/* Chat suggestions shortcuts */}
               <div className="p-2 border-t border-slate-800/60 bg-slate-950/60 flex space-x-2 overflow-x-auto whitespace-nowrap scrollbar-none">
-                <button 
-                  onClick={() => setChatInput("Will it rain tomorrow in Pune?")}
-                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
-                >
-                  🌧️ Pune Rain?
-                </button>
-                <button 
-                  onClick={() => setChatInput("Is it safe to travel from Pune to Mumbai?")}
-                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
-                >
-                  🚗 Pune ➔ Mumbai?
-                </button>
-                <button 
-                  onClick={() => setChatInput("Should I irrigate my crops today?")}
-                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
-                >
-                  🌾 Irrigate Crops?
-                </button>
+                {currentLang === 'hi' ? (
+                  <>
+                    <button 
+                      onClick={() => setChatInput("क्या आज पुणे में बारिश होगी?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌧️ क्या बारिश होगी?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("पुणे से मुंबई हाईवे सुरक्षित है क्या?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🚗 पुणे ➔ मुंबई यात्रा?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("क्या आज फसलों की सिंचाई करनी चाहिए?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌾 फसलों की सिंचाई?
+                    </button>
+                  </>
+                ) : currentLang === 'mr' ? (
+                  <>
+                    <button 
+                      onClick={() => setChatInput("पुण्यात आज पाऊस पडेल का?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌧️ पाऊस पडेल का?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("पुणे ते मुंबई हायवे प्रवास सुरक्षित आहे का?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🚗 पुणे ➔ मुंबई प्रवास?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("आज पिकांना पाणी द्यावे का?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌾 पिकांना पाणी?
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setChatInput("Will it rain tomorrow in Pune?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌧️ Pune Rain?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("Is it safe to travel from Pune to Mumbai?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🚗 Pune ➔ Mumbai?
+                    </button>
+                    <button 
+                      onClick={() => setChatInput("Should I irrigate my crops today?")}
+                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-300 border border-slate-800/80 cursor-pointer"
+                    >
+                      🌾 Irrigate Crops?
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Voice status feedback toast */}
@@ -2080,7 +2187,7 @@ export default function WeatherGPT() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
-                  placeholder={text.placeholder_search}
+                  placeholder={text.placeholder_chat}
                   className="flex-1 min-w-0 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                 />
 
