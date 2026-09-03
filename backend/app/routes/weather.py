@@ -9,10 +9,11 @@ router = APIRouter(prefix="/weather", tags=["weather"])
 @router.get("/current")
 def get_current_weather_endpoint(
     location: str = Query(..., description="City or coordinates"),
+    nwp_model: str = Query("best_match", description="NWP Forecasting Model: best_match, gfs, ecmwf, icon"),
     db: Session = Depends(get_db)
 ):
     try:
-        data = get_weather(db, location)
+        data = get_weather(db, location, nwp_model=nwp_model)
         risk = calculate_weather_risk(data)
         return {
             "weather": data,
