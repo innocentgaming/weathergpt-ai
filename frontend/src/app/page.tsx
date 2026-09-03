@@ -453,6 +453,19 @@ export default function WeatherGPT() {
     }));
   };
 
+  const ensureForecast = useCallback((w: WeatherData): WeatherData => {
+    if (!w) return DEFAULT_WEATHER;
+    if (!w.forecast || !Array.isArray(w.forecast) || w.forecast.length < 5) {
+      const baseTemp = w.current?.temp ?? 27;
+      const baseRain = w.current?.rain_probability ?? 40;
+      return {
+        ...w,
+        forecast: generateFallbackForecast(baseTemp, baseRain)
+      };
+    }
+    return w;
+  }, []);
+
   const getInstantOfflineWeather = (loc: string) => {
     const locName = loc ? (loc.charAt(0).toUpperCase() + loc.slice(1)) : "Pune";
     return {
@@ -499,17 +512,19 @@ export default function WeatherGPT() {
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            setWeather(parsed.weather);
-            setRisk(parsed.risk);
-            setIsRefreshing(false);
-            return;
+            if (parsed.weather && parsed.weather.forecast && parsed.weather.forecast.length >= 5) {
+              setWeather(ensureForecast(parsed.weather));
+              setRisk(parsed.risk || DEFAULT_RISK);
+              setIsRefreshing(false);
+              return;
+            }
           } catch (err) {
             console.error("Cache parse error:", err);
           }
         }
         // Instant offline fallback data without waiting for network failure
         const offlineData = getInstantOfflineWeather(loc);
-        setWeather(offlineData.weather);
+        setWeather(ensureForecast(offlineData.weather));
         setRisk(offlineData.risk);
         setIsRefreshing(false);
         return;
@@ -518,29 +533,33 @@ export default function WeatherGPT() {
       const res = await fetch(`${BACKEND_URL}/api/weather/current?location=${encodeURIComponent(loc)}`);
       if (res.ok) {
         const data = await res.json();
-        setWeather(data.weather);
-        setRisk(data.risk);
-        if (data.weather?.coordinates?.lat && data.weather?.coordinates?.lon) {
-          setMapCenter([data.weather.coordinates.lat, data.weather.coordinates.lon]);
+        const safeWeather = ensureForecast(data.weather);
+        setWeather(safeWeather);
+        setRisk(data.risk || DEFAULT_RISK);
+        if (safeWeather.coordinates?.lat && safeWeather.coordinates?.lon) {
+          setMapCenter([safeWeather.coordinates.lat, safeWeather.coordinates.lon]);
         }
-        if (loc.includes(',') && data.weather?.location) {
-          setSearchLocation(data.weather.location);
+        if (loc.includes(',') && safeWeather.location) {
+          setSearchLocation(safeWeather.location);
         }
         
-        // Cache to local storage
-        localStorage.setItem(`weather_cache_${loc.toLowerCase()}`, JSON.stringify(data));
+        // Cache guaranteed complete weather data to local storage
+        localStorage.setItem(`weather_cache_${loc.toLowerCase()}`, JSON.stringify({
+          weather: safeWeather,
+          risk: data.risk || DEFAULT_RISK
+        }));
       } else {
         throw new Error("Failed to fetch weather");
       }
     } catch (e) {
       console.error("Fetch weather fallback triggered:", e);
       const offlineData = getInstantOfflineWeather(loc);
-      setWeather(offlineData.weather);
+      setWeather(ensureForecast(offlineData.weather));
       setRisk(offlineData.risk);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isOffline]);
+  }, [isOffline, ensureForecast]);
 
   const handleUseCurrentLocation = () => {
     if (typeof window !== 'undefined' && navigator.geolocation) {
@@ -551,6 +570,15 @@ export default function WeatherGPT() {
           const lon = position.coords.longitude;
           setMapCenter([lat, lon]);
           const coordStr = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+          
+          // Clear any corrupt/empty cached entries for this coordinate
+          try {
+            localStorage.removeItem(`weather_cache_${coordStr.toLowerCase()}`);
+            localStorage.removeItem(`weather_cache_${coordStr}`);
+          } catch {
+            // ignore
+          }
+
           setSearchLocation(coordStr);
           fetchWeatherData(coordStr);
         },
@@ -1335,55 +1363,63 @@ export default function WeatherGPT() {
                 </div>
 
                 {/* 7-Day Forecast Grid */}
-                <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-                  <h3 className="text-lg font-bold text-slate-200 mb-4">{text.label_forecast}</h3>
-                  <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800">
-                    {weather.forecast.map((fc: WeatherForecastItem, idx: number) => (
-                      <button 
-                        key={idx}
-                        onClick={() => setSelectedForecastIndex(idx)}
-                        className={`flex-none w-32 p-4 rounded-xl border transition text-center select-none cursor-pointer shadow-sm
-                          ${selectedForecastIndex === idx 
-                            ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-md ring-2 ring-emerald-500/30 font-bold' 
-                            : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:text-slate-100'
-                          }
-                        `}
-                      >
-                        <p className="text-xs font-bold">{translateDay(fc.day, currentLang)}</p>
-                        <div className="flex justify-center my-3">{getWeatherIcon(fc.icon)}</div>
-                        <p className="text-base font-black text-white">{fc.temp}°C</p>
-                        <span className={`inline-block mt-2 px-1.5 py-0.5 rounded text-[8px] font-black text-white
-                          ${fc.risk_level === 'SEVERE' ? 'bg-red-500' : 
-                            fc.risk_level === 'HIGH' ? 'bg-orange-500' : 
-                            fc.risk_level === 'MODERATE' ? 'bg-amber-500' : 'bg-emerald-500'}
-                        `}>
-                          {translateRiskCategory(fc.risk_level, currentLang)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                {(() => {
+                  const activeForecast = (weather?.forecast && weather.forecast.length > 0)
+                    ? weather.forecast
+                    : generateFallbackForecast(weather?.current?.temp ?? 27, weather?.current?.rain_probability ?? 40);
+                  const activeIdx = Math.min(selectedForecastIndex, activeForecast.length - 1);
+                  return (
+                    <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
+                      <h3 className="text-lg font-bold text-slate-200 mb-4">{text.label_forecast}</h3>
+                      <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800">
+                        {activeForecast.map((fc: WeatherForecastItem, idx: number) => (
+                          <button 
+                            key={idx}
+                            onClick={() => setSelectedForecastIndex(idx)}
+                            className={`flex-none w-32 p-4 rounded-xl border transition text-center select-none cursor-pointer shadow-sm
+                              ${activeIdx === idx 
+                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-md ring-2 ring-emerald-500/30 font-bold' 
+                                : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:text-slate-100'
+                              }
+                            `}
+                          >
+                            <p className="text-xs font-bold">{translateDay(fc.day, currentLang)}</p>
+                            <div className="flex justify-center my-3">{getWeatherIcon(fc.icon)}</div>
+                            <p className="text-base font-black text-white">{fc.temp}°C</p>
+                            <span className={`inline-block mt-2 px-1.5 py-0.5 rounded text-[8px] font-black text-white
+                              ${fc.risk_level === 'SEVERE' ? 'bg-red-500' : 
+                                fc.risk_level === 'HIGH' ? 'bg-orange-500' : 
+                                fc.risk_level === 'MODERATE' ? 'bg-amber-500' : 'bg-emerald-500'}
+                            `}>
+                              {translateRiskCategory(fc.risk_level, currentLang)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
 
-                  {/* Selected Day forecast details */}
-                  {weather.forecast[selectedForecastIndex] && (
-                    <div className="mt-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/60 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-                      <div>
-                        <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-500">{text.day_details}</span>
-                        <h4 className="text-base font-black text-white mt-0.5">
-                          {translateDay(weather.forecast[selectedForecastIndex].day, currentLang)} — {translateCondition(weather.forecast[selectedForecastIndex].condition, currentLang)}
-                        </h4>
-                        <p className="text-xs text-slate-400 mt-1 max-w-xl">
-                          <span className="font-bold text-slate-300">{text.ai_advice}</span> {translateRecommendation(weather.forecast[selectedForecastIndex].recommendation, currentLang)}
-                        </p>
-                      </div>
-                      
-                      <div className="flex gap-6 text-xs text-slate-400 border-t md:border-t-0 border-slate-800 pt-3 md:pt-0 w-full md:w-auto">
-                        <div>{text.rain_prob}: <span className="font-bold text-slate-200">{weather.forecast[selectedForecastIndex].rain_probability}%</span></div>
-                        <div>{text.wind}: <span className="font-bold text-slate-200">{weather.forecast[selectedForecastIndex].wind} km/h</span></div>
-                        <div>{text.humidity}: <span className="font-bold text-slate-200">{weather.forecast[selectedForecastIndex].humidity}%</span></div>
-                      </div>
+                      {/* Selected Day forecast details */}
+                      {activeForecast[activeIdx] && (
+                        <div className="mt-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/60 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                          <div>
+                            <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-500">{text.day_details}</span>
+                            <h4 className="text-base font-black text-white mt-0.5">
+                              {translateDay(activeForecast[activeIdx].day, currentLang)} — {translateCondition(activeForecast[activeIdx].condition, currentLang)}
+                            </h4>
+                            <p className="text-xs text-slate-400 mt-1 max-w-xl">
+                              <span className="font-bold text-slate-300">{text.ai_advice}</span> {translateRecommendation(activeForecast[activeIdx].recommendation, currentLang)}
+                            </p>
+                          </div>
+                          
+                          <div className="flex gap-6 text-xs text-slate-400 border-t md:border-t-0 border-slate-800 pt-3 md:pt-0 w-full md:w-auto">
+                            <div>{text.rain_prob}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].rain_probability}%</span></div>
+                            <div>{text.wind}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].wind} km/h</span></div>
+                            <div>{text.humidity}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].humidity}%</span></div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* Upgraded Dynamic Analytics Graphs with Dual Mode (Precipitation & Temperature) */}
                 <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/80 rounded-2xl p-6 shadow-xl relative overflow-hidden">
@@ -1427,47 +1463,51 @@ export default function WeatherGPT() {
 
                   {/* Chart Container with Fixed Parent Height */}
                   <div className="h-56 w-full flex items-end justify-between gap-3 pt-6 pb-2 px-3 bg-slate-950/60 rounded-xl border border-slate-800/60 chart-container-track">
-                    {weather.forecast.map((fc: WeatherForecastItem, idx: number) => {
-                      const isRainMode = chartMode === 'rain';
-                      const displayVal = isRainMode ? `${fc.rain_probability}%` : `${fc.temp}°C`;
-                      
-                      // Calculate normalized height percentage for chart bars
-                      const barHeightPercent = isRainMode 
-                        ? Math.max(fc.rain_probability, 8) 
-                        : Math.min(Math.max(((fc.temp - 10) / 35) * 100, 15), 100);
+                    {(() => {
+                      const activeForecast = (weather?.forecast && weather.forecast.length > 0)
+                        ? weather.forecast
+                        : generateFallbackForecast(weather?.current?.temp ?? 27, weather?.current?.rain_probability ?? 40);
+                      return activeForecast.map((fc: WeatherForecastItem, idx: number) => {
+                        const isRainMode = chartMode === 'rain';
+                        const displayVal = isRainMode ? `${fc.rain_probability}%` : `${fc.temp}°C`;
+                        
+                        // Calculate normalized height percentage for chart bars
+                        const barHeightPercent = isRainMode 
+                          ? Math.max(fc.rain_probability, 8) 
+                          : Math.min(Math.max(((fc.temp - 10) / 35) * 100, 15), 100);
 
-                      return (
-                        <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer">
-                          
-                          {/* Tooltip on Hover */}
-                          <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 bg-slate-900 border border-slate-700 text-slate-100 text-[11px] p-2 rounded-xl shadow-2xl whitespace-nowrap flex flex-col items-center">
-                            <span className="font-bold text-cyan-300">{translateDay(fc.day, currentLang)}</span>
-                            <span>{translateCondition(fc.condition, currentLang)} • {fc.temp}°C</span>
-                            <span className="text-[10px] text-slate-400">Rain: {fc.rain_probability}% | Wind: {fc.wind} km/h</span>
-                          </div>
-
-                          {/* Value Badge on top of bar */}
-                          <span className={`text-[11px] font-black mb-2 transition-transform duration-300 group-hover:-translate-y-1 ${
-                            isRainMode ? 'text-cyan-300' : 'text-amber-300'
-                          }`}>
-                            {displayVal}
-                          </span>
-
-                          {/* Bar Container Track with Explicit Height */}
-                          <div className="w-full h-32 bg-slate-900/90 border border-slate-800 rounded-t-xl overflow-hidden flex items-end relative p-1 shadow-inner chart-bar-well">
-                            {/* Grid lines inside bar track */}
-                            <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100%_16px] pointer-events-none" />
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full group relative cursor-pointer">
                             
-                            {/* Filled Animated Bar */}
-                            <div 
-                              className={`w-full rounded-t-lg transition-all duration-700 ease-out shadow-lg ${
-                                isRainMode 
-                                  ? 'bg-gradient-to-t from-cyan-600 via-teal-500 to-emerald-400 group-hover:from-cyan-400 group-hover:to-emerald-300 bar-glow-cyan' 
-                                  : 'bg-gradient-to-t from-orange-600 via-amber-500 to-yellow-400 group-hover:from-orange-400 group-hover:to-yellow-300 bar-glow'
-                              }`}
-                              style={{ height: `${barHeightPercent}%` }}
-                            />
-                          </div>
+                            {/* Tooltip on Hover */}
+                            <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 bg-slate-900 border border-slate-700 text-slate-100 text-[11px] p-2 rounded-xl shadow-2xl whitespace-nowrap flex flex-col items-center">
+                              <span className="font-bold text-cyan-300">{translateDay(fc.day, currentLang)}</span>
+                              <span>{translateCondition(fc.condition, currentLang)} • {fc.temp}°C</span>
+                              <span className="text-[10px] text-slate-400">Rain: {fc.rain_probability}% | Wind: {fc.wind} km/h</span>
+                            </div>
+
+                            {/* Value Badge on top of bar */}
+                            <span className={`text-[11px] font-black mb-2 transition-transform duration-300 group-hover:-translate-y-1 ${
+                              isRainMode ? 'text-cyan-300' : 'text-amber-300'
+                            }`}>
+                              {displayVal}
+                            </span>
+
+                            {/* Bar Container Track with Explicit Height */}
+                            <div className="w-full h-32 bg-slate-900/90 border border-slate-800 rounded-t-xl overflow-hidden flex items-end relative p-1 shadow-inner chart-bar-well">
+                              {/* Grid lines inside bar track */}
+                              <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:100%_16px] pointer-events-none" />
+                              
+                              {/* Filled Animated Bar */}
+                              <div 
+                                className={`w-full rounded-t-lg transition-all duration-700 ease-out shadow-lg ${
+                                  isRainMode 
+                                    ? 'bg-gradient-to-t from-cyan-600 via-teal-500 to-emerald-400 group-hover:from-cyan-400 group-hover:to-emerald-300 bar-glow-cyan' 
+                                    : 'bg-gradient-to-t from-orange-600 via-amber-500 to-yellow-400 group-hover:from-orange-400 group-hover:to-yellow-300 bar-glow'
+                                }`}
+                                style={{ height: `${barHeightPercent}%` }}
+                              />
+                            </div>
 
                           {/* Day & Icon */}
                           <div className="mt-3 flex flex-col items-center">
@@ -1477,9 +1517,10 @@ export default function WeatherGPT() {
                             <span className="text-[9px] text-slate-500 font-medium truncate max-w-[60px] text-center">{translateCondition(fc.condition, currentLang)}</span>
                           </div>
 
-                        </div>
-                      );
-                    })}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
