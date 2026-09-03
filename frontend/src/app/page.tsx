@@ -9,7 +9,7 @@ import {
   Map as MapIcon, Send, Mic, Volume2, Heart, Settings as SettingsIcon,
   ChevronRight, RefreshCw, Layers, CheckCircle2, User, Activity, GraduationCap,
   Sliders, PhoneCall, TrendingUp, FileText, Droplets, Thermometer, Sparkles, LogIn,
-  Wifi, WifiOff
+  Wifi, WifiOff, Calendar, Clock
 } from 'lucide-react';
 
 import DisasterSimulationModal from './components/DisasterSimulationModal';
@@ -49,9 +49,22 @@ export interface WeatherCurrent {
   uv_index?: number;
 }
 
+export interface HourlyForecastItem {
+  time: string;
+  temp: number;
+  condition: string;
+  icon: string;
+  rain_probability: number;
+  wind: number;
+}
+
 export interface WeatherForecastItem {
   day: string;
+  date?: string;
+  date_iso?: string;
   temp: number;
+  temp_max?: number;
+  temp_min?: number;
   condition: string;
   icon: string;
   rain_probability: number;
@@ -59,6 +72,10 @@ export interface WeatherForecastItem {
   humidity: number;
   risk_level: string;
   recommendation: string;
+  uv_index?: number;
+  sunrise?: string;
+  sunset?: string;
+  hourly?: HourlyForecastItem[];
 }
 
 export interface WeatherAlert {
@@ -428,9 +445,8 @@ export default function WeatherGPT() {
     localStorage.setItem('weathergpt_mode', 'general');
   };
 
-  // Helpers for instant offline fallback
+  // Helpers for instant offline fallback with Google Weather style date & hourly features
   const generateFallbackForecast = (baseTemp: number, baseRain: number): WeatherForecastItem[] => {
-    const days = ["Today", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const conditions = [
       { cond: "Partly Cloudy", icon: "sun", risk: "LOW", rec: "Pleasant outdoor weather expected." },
       { cond: "Light Showers", icon: "cloud-drizzle", risk: "LOW", rec: "Light raincoat or umbrella recommended." },
@@ -440,17 +456,57 @@ export default function WeatherGPT() {
       { cond: "Clear Sky", icon: "sun", risk: "LOW", rec: "Ideal travel and harvesting conditions." },
       { cond: "Heavy Rain", icon: "cloud-lightning", risk: "SEVERE", rec: "Secure property and avoid non-essential travel." }
     ];
-    return days.map((d, i) => ({
-      day: d,
-      temp: Math.round(baseTemp + (i % 3) * 1.5 - (i > 3 ? 2 : 0)),
-      condition: conditions[i % conditions.length].cond,
-      icon: conditions[i % conditions.length].icon,
-      rain_probability: Math.max(10, Math.min(95, baseRain - i * 11 + (i % 2 === 0 ? 15 : -5))),
-      wind: 14 + (i * 2) % 10,
-      humidity: Math.max(45, Math.min(92, 80 - i * 4)),
-      risk_level: conditions[i % conditions.length].risk,
-      recommendation: conditions[i % conditions.length].rec
-    }));
+    const baseDate = new Date();
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const targetDate = new Date(baseDate);
+      targetDate.setDate(baseDate.getDate() + i);
+      const dayName = i === 0 ? "Today" : dayNames[targetDate.getDay()];
+      const dateFormatted = `${String(targetDate.getDate()).padStart(2, '0')} ${monthNames[targetDate.getMonth()]}`;
+      const dateIso = targetDate.toISOString().split('T')[0];
+
+      const tMax = Math.round(baseTemp + (i % 3) * 1.5 - (i > 3 ? 2 : 0));
+      const tMin = Math.round(tMax - 5 - (i % 2 === 0 ? 1 : 0));
+      const rainProb = Math.max(10, Math.min(95, baseRain - i * 11 + (i % 2 === 0 ? 15 : -5)));
+      const condObj = conditions[i % conditions.length];
+
+      const hourLabels = ["12:00 AM", "03:00 AM", "06:00 AM", "09:00 AM", "12:00 PM", "03:00 PM", "06:00 PM", "09:00 PM"];
+      const hourlySlices: HourlyForecastItem[] = hourLabels.map((hLabel, hStep) => {
+        const isDaytime = hStep >= 3 && hStep <= 5;
+        const sliceTemp = Math.round(tMin + ((tMax - tMin) * (isDaytime ? 0.85 : 0.25)));
+        const sliceRain = Math.max(5, Math.min(95, rainProb + (isDaytime ? 10 : -10)));
+        return {
+          time: hLabel,
+          temp: sliceTemp,
+          rain_probability: sliceRain,
+          condition: sliceRain > 60 ? "Rain" : (sliceRain > 30 ? "Partly Cloudy" : "Clear Sky"),
+          icon: sliceRain > 60 ? "cloud-rain" : (sliceRain > 30 ? "cloud" : "sun"),
+          wind: 12 + (hStep % 4)
+        };
+      });
+
+      return {
+        day: dayName,
+        date: dateFormatted,
+        date_iso: dateIso,
+        temp: tMax,
+        temp_max: tMax,
+        temp_min: tMin,
+        condition: condObj.cond,
+        icon: condObj.icon,
+        rain_probability: rainProb,
+        wind: 14 + (i * 2) % 10,
+        humidity: Math.max(45, Math.min(92, 80 - i * 4)),
+        risk_level: condObj.risk,
+        recommendation: condObj.rec,
+        uv_index: Math.max(3, Math.min(9, 7 - (i % 3))),
+        sunrise: "06:15 AM",
+        sunset: "06:45 PM",
+        hourly: hourlySlices
+      };
+    });
   };
 
   const ensureForecast = useCallback((w: WeatherData): WeatherData => {
@@ -1362,59 +1418,171 @@ export default function WeatherGPT() {
                   )}
                 </div>
 
-                {/* 7-Day Forecast Grid */}
+                {/* 7-Day Forecast Grid & Google Weather Day-Wise Date Inspector */}
                 {(() => {
                   const activeForecast = (weather?.forecast && weather.forecast.length > 0)
                     ? weather.forecast
                     : generateFallbackForecast(weather?.current?.temp ?? 27, weather?.current?.rain_probability ?? 40);
                   const activeIdx = Math.min(selectedForecastIndex, activeForecast.length - 1);
+                  const selectedDay = activeForecast[activeIdx];
+
                   return (
                     <div className="bg-slate-900/30 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-                      <h3 className="text-lg font-bold text-slate-200 mb-4">{text.label_forecast}</h3>
-                      <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800">
-                        {activeForecast.map((fc: WeatherForecastItem, idx: number) => (
-                          <button 
-                            key={idx}
-                            onClick={() => setSelectedForecastIndex(idx)}
-                            className={`flex-none w-32 p-4 rounded-xl border transition text-center select-none cursor-pointer shadow-sm
-                              ${activeIdx === idx 
-                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 shadow-md ring-2 ring-emerald-500/30 font-bold' 
-                                : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:text-slate-100'
-                              }
-                            `}
+                      {/* Section Header with Title & Google Weather Date Option Selector */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-emerald-400" />
+                            <h3 className="text-lg font-bold text-slate-100">{text.label_forecast}</h3>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">Google Weather style day-wise forecast & date inspection</p>
+                        </div>
+
+                        {/* Date Option Dropdown Selector */}
+                        <div className="flex items-center gap-2 self-start sm:self-auto bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 shadow-sm">
+                          <Calendar className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span className="text-xs font-semibold text-slate-400 hidden md:inline">Select Date:</span>
+                          <select
+                            value={activeIdx}
+                            onChange={(e) => setSelectedForecastIndex(Number(e.target.value))}
+                            className="bg-transparent text-xs font-bold text-emerald-300 focus:outline-none cursor-pointer pr-1"
                           >
-                            <p className="text-xs font-bold">{translateDay(fc.day, currentLang)}</p>
-                            <div className="flex justify-center my-3">{getWeatherIcon(fc.icon)}</div>
-                            <p className="text-base font-black text-white">{fc.temp}°C</p>
-                            <span className={`inline-block mt-2 px-1.5 py-0.5 rounded text-[8px] font-black text-white
-                              ${fc.risk_level === 'SEVERE' ? 'bg-red-500' : 
-                                fc.risk_level === 'HIGH' ? 'bg-orange-500' : 
-                                fc.risk_level === 'MODERATE' ? 'bg-amber-500' : 'bg-emerald-500'}
-                            `}>
-                              {translateRiskCategory(fc.risk_level, currentLang)}
-                            </span>
-                          </button>
-                        ))}
+                            {activeForecast.map((fc: WeatherForecastItem, idx: number) => (
+                              <option key={idx} value={idx} className="bg-slate-900 text-slate-200">
+                                {translateDay(fc.day, currentLang)} • {fc.date || `Day ${idx + 1}`} ({fc.temp_max ?? fc.temp}°C)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
 
-                      {/* Selected Day forecast details */}
-                      {activeForecast[activeIdx] && (
-                        <div className="mt-6 p-4 rounded-xl bg-slate-900/60 border border-slate-800/60 flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-                          <div>
-                            <span className="text-[10px] font-extrabold tracking-wider uppercase text-emerald-500">{text.day_details}</span>
-                            <h4 className="text-base font-black text-white mt-0.5">
-                              {translateDay(activeForecast[activeIdx].day, currentLang)} — {translateCondition(activeForecast[activeIdx].condition, currentLang)}
-                            </h4>
-                            <p className="text-xs text-slate-400 mt-1 max-w-xl">
-                              <span className="font-bold text-slate-300">{text.ai_advice}</span> {translateRecommendation(activeForecast[activeIdx].recommendation, currentLang)}
-                            </p>
+                      {/* 7-Day Cards Carousel (Google Weather Cards with Max/Min Temp & Date) */}
+                      <div className="flex space-x-3.5 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800">
+                        {activeForecast.map((fc: WeatherForecastItem, idx: number) => {
+                          const isSelected = activeIdx === idx;
+                          const tMax = fc.temp_max ?? fc.temp;
+                          const tMin = fc.temp_min ?? (fc.temp - 5);
+
+                          return (
+                            <button 
+                              key={idx}
+                              onClick={() => setSelectedForecastIndex(idx)}
+                              className={`flex-none w-32 p-3.5 rounded-2xl border transition text-center select-none cursor-pointer shadow-sm relative overflow-hidden ${
+                                isSelected 
+                                  ? 'bg-gradient-to-b from-emerald-500/20 to-slate-900/90 border-emerald-500 text-emerald-300 shadow-lg ring-2 ring-emerald-500/40 font-bold' 
+                                  : 'bg-slate-900/60 border-slate-800/80 text-slate-300 hover:border-slate-700 hover:text-slate-100 hover:bg-slate-900/90'
+                              }`}
+                            >
+                              {/* Active Date Indicator Dot */}
+                              {isSelected && (
+                                <div className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              )}
+
+                              <p className="text-xs font-bold text-slate-100">{translateDay(fc.day, currentLang)}</p>
+                              {fc.date && (
+                                <span className="inline-block mt-0.5 text-[10px] font-semibold text-emerald-400/90 tracking-wide">
+                                  {fc.date}
+                                </span>
+                              )}
+                              
+                              <div className="flex justify-center my-2.5 scale-105">{getWeatherIcon(fc.icon)}</div>
+                              
+                              {/* Google Weather High / Low Temps */}
+                              <div className="flex items-baseline justify-center gap-1.5 my-1">
+                                <span className="text-base font-black text-white">{tMax}°</span>
+                                <span className="text-xs font-medium text-slate-400">/ {tMin}°</span>
+                              </div>
+
+                              {/* Rain Probability pill */}
+                              <div className="flex items-center justify-center gap-1 mt-2 text-[10px] text-cyan-300 font-semibold">
+                                <Droplets className="h-3 w-3" />
+                                <span>{fc.rain_probability}%</span>
+                              </div>
+
+                              <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[8px] font-black text-white tracking-wider uppercase ${
+                                fc.risk_level === 'SEVERE' ? 'bg-red-500/90' : 
+                                fc.risk_level === 'HIGH' ? 'bg-orange-500/90' : 
+                                fc.risk_level === 'MODERATE' ? 'bg-amber-500/90' : 'bg-emerald-500/90'}
+                              `}>
+                                {translateRiskCategory(fc.risk_level, currentLang)}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Selected Day Deep Dive: Google Weather Hour-by-Hour Timeline & Astronomical Metrics */}
+                      {selectedDay && (
+                        <div className="mt-5 p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 shadow-lg space-y-4">
+                          {/* Selected Day Summary Header */}
+                          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                                  {translateDay(selectedDay.day, currentLang)} • {selectedDay.date || "Forecast Date"}
+                                </span>
+                                {selectedDay.date_iso && (
+                                  <span className="text-[10px] font-mono text-slate-500">{selectedDay.date_iso}</span>
+                                )}
+                              </div>
+                              <h4 className="text-lg font-black text-white mt-1.5 flex items-center gap-2">
+                                {translateCondition(selectedDay.condition, currentLang)}
+                                <span className="text-sm font-normal text-slate-400">
+                                  (High: <strong className="text-white">{selectedDay.temp_max ?? selectedDay.temp}°C</strong> | Low: <strong className="text-slate-300">{selectedDay.temp_min ?? (selectedDay.temp - 5)}°C</strong>)
+                                </span>
+                              </h4>
+                              <p className="text-xs text-slate-400 mt-1 max-w-xl leading-relaxed">
+                                <span className="font-bold text-slate-300">{text.ai_advice}</span> {translateRecommendation(selectedDay.recommendation, currentLang)}
+                              </p>
+                            </div>
+                            
+                            {/* Day Macro Parameters Grid */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs w-full md:w-auto shrink-0 bg-slate-950/60 p-3 rounded-xl border border-slate-800/60">
+                              <div>
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold">🌅 Sunrise</span>
+                                <span className="font-bold text-slate-200">{selectedDay.sunrise || "06:15 AM"}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold">🌇 Sunset</span>
+                                <span className="font-bold text-slate-200">{selectedDay.sunset || "06:45 PM"}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold">☀️ UV Index</span>
+                                <span className="font-bold text-amber-300">{selectedDay.uv_index ?? 6} / 10</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-slate-500 uppercase block font-semibold">💧 Humidity</span>
+                                <span className="font-bold text-cyan-300">{selectedDay.humidity}%</span>
+                              </div>
+                            </div>
                           </div>
-                          
-                          <div className="flex gap-6 text-xs text-slate-400 border-t md:border-t-0 border-slate-800 pt-3 md:pt-0 w-full md:w-auto">
-                            <div>{text.rain_prob}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].rain_probability}%</span></div>
-                            <div>{text.wind}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].wind} km/h</span></div>
-                            <div>{text.humidity}: <span className="font-bold text-slate-200">{activeForecast[activeIdx].humidity}%</span></div>
-                          </div>
+
+                          {/* Google Weather Hourly Strip for this Day */}
+                          {selectedDay.hourly && selectedDay.hourly.length > 0 && (
+                            <div className="pt-3 border-t border-slate-800/70">
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                                  <Clock className="h-3.5 w-3.5 text-cyan-400" /> Hourly Forecast ({translateDay(selectedDay.day, currentLang)}{selectedDay.date ? ` - ${selectedDay.date}` : ''})
+                                </span>
+                                <span className="text-[10px] text-slate-500">24-hr day-wise temperature & precipitation variance</span>
+                              </div>
+                              <div className="flex space-x-2.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-800">
+                                {selectedDay.hourly.map((hr: HourlyForecastItem, hIdx: number) => (
+                                  <div 
+                                    key={hIdx} 
+                                    className="flex-none w-20 p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/60 text-center flex flex-col items-center hover:border-slate-700 transition shadow-inner"
+                                  >
+                                    <span className="text-[10px] font-semibold text-slate-400">{hr.time}</span>
+                                    <div className="my-1.5 scale-90">{getWeatherIcon(hr.icon)}</div>
+                                    <span className="text-xs font-black text-white">{hr.temp}°C</span>
+                                    <span className="text-[9px] font-bold text-cyan-400 mt-1 flex items-center gap-0.5">
+                                      <Droplets className="h-2.5 w-2.5" />{hr.rain_probability}%
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

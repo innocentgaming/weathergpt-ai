@@ -817,7 +817,13 @@ def fetch_weather_from_open_meteo(city: str) -> Dict[str, Any]:
             _GEO_COORDS_CACHE[norm_c] = (lat, lon, display_name)
         
         # Step 2: Fetch Live Forecast & Current Weather
-        weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto"
+        weather_url = (
+            f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+            f"&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m"
+            f"&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset,uv_index_max"
+            f"&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m"
+            f"&timezone=auto"
+        )
         w_res = _HTTP_SESSION.get(weather_url, timeout=5.0)
         if not w_res.ok:
             raise ValueError(f"Open-Meteo HTTP {w_res.status_code}")
@@ -828,6 +834,7 @@ def fetch_weather_from_open_meteo(city: str) -> Dict[str, Any]:
         
         current = w_data.get("current", {})
         daily = w_data.get("daily", {})
+        hourly = w_data.get("hourly", {})
         
         # Weather Code Mapping (WMO Code)
         wmo_code = current.get("weather_code", 0)
@@ -873,29 +880,58 @@ def fetch_weather_from_open_meteo(city: str) -> Dict[str, Any]:
             "updated_at": datetime.now().strftime("%I:%M %p")
         }
         
-        # Build 7-day forecast
+        # Build 7-day forecast with Google Weather date & hourly features
         forecast_list = []
         days_time = daily.get("time", [])
         temp_maxs = daily.get("temperature_2m_max", [])
+        temp_mins = daily.get("temperature_2m_min", [])
         rain_probs = daily.get("precipitation_probability_max", [])
         wind_maxs = daily.get("wind_speed_10m_max", [])
         wmo_codes = daily.get("weather_code", [])
+        sunrises = daily.get("sunrise", [])
+        sunsets = daily.get("sunset", [])
+        uv_maxs = daily.get("uv_index_max", [])
+
+        h_times = hourly.get("time", [])
+        h_temps = hourly.get("temperature_2m", [])
+        h_probs = hourly.get("precipitation_probability", [])
+        h_codes = hourly.get("weather_code", [])
+        h_winds = hourly.get("wind_speed_10m", [])
         
         if days_time:
             for idx in range(min(len(days_time), 7)):
-                dt_obj = datetime.strptime(days_time[idx], "%Y-%m-%d")
+                date_iso = days_time[idx]
+                dt_obj = datetime.strptime(date_iso, "%Y-%m-%d")
                 day_name = "Today" if idx == 0 else dt_obj.strftime("%A")
+                date_formatted = dt_obj.strftime("%d %b")
                 
                 p_prob = rain_probs[idx] if idx < len(rain_probs) else 20
-                t_max = temp_maxs[idx] if idx < len(temp_maxs) else current_parsed["temp"]
-                w_max = wind_maxs[idx] if idx < len(wind_maxs) else current_parsed["wind_speed"]
+                t_max = round(temp_maxs[idx]) if idx < len(temp_maxs) else round(current_parsed["temp"])
+                t_min = round(temp_mins[idx]) if idx < len(temp_mins) else round(t_max - 5)
+                w_max = round(wind_maxs[idx]) if idx < len(wind_maxs) else round(current_parsed["wind_speed"])
                 code_d = wmo_codes[idx] if idx < len(wmo_codes) else 0
+                uv_val = round(uv_maxs[idx], 1) if idx < len(uv_maxs) else 6.0
                 
-                f_cond = "Clear"
+                sr_time = sunrises[idx].split("T")[-1] if idx < len(sunrises) else "06:15"
+                ss_time = sunsets[idx].split("T")[-1] if idx < len(sunsets) else "18:45"
+                try:
+                    sr_disp = datetime.strptime(sr_time, "%H:%M").strftime("%I:%M %p")
+                except Exception:
+                    sr_disp = "06:15 AM"
+                try:
+                    ss_disp = datetime.strptime(ss_time, "%H:%M").strftime("%I:%M %p")
+                except Exception:
+                    ss_disp = "06:45 PM"
+
+                f_cond = "Clear Sky"
                 f_icon = "sun"
                 if code_d in [1, 2, 3]:
-                    f_cond = "Cloudy"; f_icon = "cloud"
-                elif code_d in [51, 53, 55, 61, 63, 65, 80, 81]:
+                    f_cond = "Partly Cloudy"; f_icon = "cloud"
+                elif code_d in [45, 48]:
+                    f_cond = "Foggy"; f_icon = "cloud"
+                elif code_d in [51, 53, 55, 56, 57]:
+                    f_cond = "Drizzle"; f_icon = "cloud-drizzle"
+                elif code_d in [61, 63, 65, 66, 67, 80, 81]:
                     f_cond = "Rain"; f_icon = "cloud-rain"
                 elif code_d in [95, 96, 99]:
                     f_cond = "Thunderstorm"; f_icon = "cloud-lightning"
@@ -915,38 +951,55 @@ def fetch_weather_from_open_meteo(city: str) -> Dict[str, Any]:
                     recs = "Elevated risk. Carry rain protection or monitor storm updates."
                 elif risk_lvl == "MODERATE":
                     recs = "Carry umbrella."
+                
+                # Slices for 3-hour interval breakdown across this day
+                day_hourly = []
+                day_start = idx * 24
+                for step in range(0, 24, 3):
+                    h_i = day_start + step
+                    if h_i < len(h_times):
+                        raw_h = h_times[h_i].split("T")[-1]
+                        try:
+                            h_label = datetime.strptime(raw_h, "%H:%M").strftime("%I:%M %p")
+                        except Exception:
+                            h_label = raw_h
+                        h_c = h_codes[h_i] if h_i < len(h_codes) else 0
+                        h_icon = "sun"
+                        h_cond = "Clear"
+                        if h_c in [1, 2, 3]: h_cond = "Cloudy"; h_icon = "cloud"
+                        elif h_c in [51, 53, 55, 61, 63, 65, 80, 81]: h_cond = "Rain"; h_icon = "cloud-rain"
+                        elif h_c in [95, 96, 99]: h_cond = "Thunderstorm"; h_icon = "cloud-lightning"
+                        day_hourly.append({
+                            "time": h_label,
+                            "temp": round(h_temps[h_i]) if h_i < len(h_temps) else t_max,
+                            "rain_probability": round(h_probs[h_i]) if h_i < len(h_probs) else 25,
+                            "condition": h_cond,
+                            "icon": h_icon,
+                            "wind": round(h_winds[h_i]) if h_i < len(h_winds) else 10
+                        })
                     
                 forecast_list.append({
                     "day": day_name,
-                    "temp": round(t_max),
+                    "date": date_formatted,
+                    "date_iso": date_iso,
+                    "temp": t_max,
+                    "temp_max": t_max,
+                    "temp_min": t_min,
                     "condition": f_cond,
                     "icon": f_icon,
                     "rain_probability": round(p_prob),
-                    "wind": round(w_max),
+                    "wind": w_max,
                     "humidity": current_parsed["humidity"],
                     "risk_level": risk_lvl,
-                    "recommendation": recs
+                    "recommendation": recs,
+                    "uv_index": uv_val,
+                    "sunrise": sr_disp,
+                    "sunset": ss_disp,
+                    "hourly": day_hourly
                 })
         else:
             # Generate synthesized 7-day forecast from live current metrics
-            base_date = datetime.now()
-            base_t = current_parsed["temp"]
-            base_p = current_parsed["rain_probability"]
-            days_week = ["Today", "Tomorrow"] + [(base_date + timedelta(days=i)).strftime("%A") for i in range(2, 7)]
-            for i, dname in enumerate(days_week):
-                var_temp = round(base_t + (i % 3) * 0.8 - (1.5 if i > 3 else 0))
-                var_rain = max(10, min(95, base_p - (i * 7) + (12 if i % 2 == 0 else -6)))
-                forecast_list.append({
-                    "day": dname,
-                    "temp": var_temp,
-                    "condition": cond_str if i == 0 else ("Rain" if var_rain > 60 else "Partly Cloudy"),
-                    "icon": icon_str if i == 0 else ("cloud-rain" if var_rain > 60 else "cloud"),
-                    "rain_probability": var_rain,
-                    "wind": round(current_parsed["wind_speed"] + (i % 2)),
-                    "humidity": current_parsed["humidity"],
-                    "risk_level": "SEVERE" if var_rain > 80 else ("HIGH" if var_rain > 60 else "LOW"),
-                    "recommendation": "Elevated rain alert. Carry rain protection." if var_rain > 60 else "Optimal conditions for outdoor activities."
-                })
+            forecast_list = synthesize_7day_forecast(current_parsed)
 
             
         return {
@@ -968,7 +1021,7 @@ def get_wind_direction(deg: int) -> str:
 
 
 def synthesize_7day_forecast(current_dict: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Synthesizes a realistic, high-fidelity 7-day forecast from current weather conditions."""
+    """Synthesizes a realistic, high-fidelity Google-weather style 7-day forecast from current conditions."""
     base_t = float(current_dict.get("temp", 27.0))
     base_p = int(current_dict.get("rain_probability", 35))
     base_w = float(current_dict.get("wind_speed", 14.0))
@@ -977,15 +1030,40 @@ def synthesize_7day_forecast(current_dict: Dict[str, Any]) -> List[Dict[str, Any
     icon_main = current_dict.get("icon", "cloud")
     
     base_date = datetime.now()
-    days_week = ["Today", "Tomorrow"] + [(base_date + timedelta(days=i)).strftime("%A") for i in range(2, 7)]
     result = []
-    for i, dname in enumerate(days_week):
-        var_temp = round(base_t + (i % 3) * 0.8 - (1.5 if i > 3 else 0))
+    for i in range(7):
+        target_d = base_date + timedelta(days=i)
+        dname = "Today" if i == 0 else target_d.strftime("%A")
+        date_formatted = target_d.strftime("%d %b")
+        date_iso = target_d.strftime("%Y-%m-%d")
+
+        var_temp_max = round(base_t + (i % 3) * 0.8 - (1.5 if i > 3 else 0))
+        var_temp_min = round(var_temp_max - 5.0 - (1 if i % 2 == 0 else 0))
         var_rain = max(10, min(95, base_p - (i * 6) + (10 if i % 2 == 0 else -6)))
         risk_lvl = "SEVERE" if var_rain > 80 else ("HIGH" if var_rain > 60 else ("MODERATE" if var_rain > 35 else "LOW"))
+        
+        # Synthesize 8 3-hour interval slices
+        hourly_slices = []
+        hour_labels = ["12:00 AM", "03:00 AM", "06:00 AM", "09:00 AM", "12:00 PM", "03:00 PM", "06:00 PM", "09:00 PM"]
+        for h_step, h_time in enumerate(hour_labels):
+            slice_temp = round(var_temp_min + ((var_temp_max - var_temp_min) * (0.8 if 3 <= h_step <= 5 else 0.2)))
+            slice_rain = max(5, min(95, var_rain + (10 if 3 <= h_step <= 5 else -10)))
+            hourly_slices.append({
+                "time": h_time,
+                "temp": slice_temp,
+                "rain_probability": slice_rain,
+                "condition": "Rain" if slice_rain > 60 else ("Partly Cloudy" if slice_rain > 30 else "Clear Sky"),
+                "icon": "cloud-rain" if slice_rain > 60 else ("cloud" if slice_rain > 30 else "sun"),
+                "wind": round(base_w + (h_step % 3))
+            })
+
         result.append({
             "day": dname,
-            "temp": var_temp,
+            "date": date_formatted,
+            "date_iso": date_iso,
+            "temp": var_temp_max,
+            "temp_max": var_temp_max,
+            "temp_min": var_temp_min,
             "condition": cond_main if i == 0 else ("Rain" if var_rain > 60 else ("Partly Cloudy" if var_rain > 30 else "Clear Sky")),
             "icon": icon_main if i == 0 else ("cloud-rain" if var_rain > 60 else ("cloud" if var_rain > 30 else "sun")),
             "rain_probability": var_rain,
@@ -994,7 +1072,11 @@ def synthesize_7day_forecast(current_dict: Dict[str, Any]) -> List[Dict[str, Any
             "risk_level": risk_lvl,
             "recommendation": "Severe storm conditions. Limit travel." if risk_lvl == "SEVERE" else (
                 "Elevated precipitation risk. Carry rain protection." if risk_lvl == "HIGH" else "Optimal conditions for outdoor activities."
-            )
+            ),
+            "uv_index": round(max(3.0, min(10.0, 7.0 - (i % 3))), 1),
+            "sunrise": "06:15 AM",
+            "sunset": "06:45 PM",
+            "hourly": hourly_slices
         })
     return result
 
