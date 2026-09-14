@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { WeatherData, RiskData, NwpModel } from '../lib/types';
 import { DEFAULT_LOCATION } from '../constants/location';
 import { fetchCurrentWeather } from '../services/weatherService';
+import { FALLBACK_SYNOPTIC_WEATHER, FALLBACK_SYNOPTIC_RISK } from '../constants/fallbackWeather';
 
 export function useWeatherData(initialLocation: string = DEFAULT_LOCATION.fullName) {
   const [location, setLocation] = useState<string>(() => {
@@ -117,6 +118,8 @@ export function useWeatherData(initialLocation: string = DEFAULT_LOCATION.fullNa
         }
         const errorMsg = (err as Error)?.message || 'Weather network timeout or offline error';
         setError(errorMsg);
+        setWeather((prev) => prev || { ...FALLBACK_SYNOPTIC_WEATHER, location: loc });
+        setRisk((prev) => prev || FALLBACK_SYNOPTIC_RISK);
       } finally {
         if (isMountedRef.current && currentRequestId === requestIdRef.current) {
           setLoading(false);

@@ -9,6 +9,15 @@
  * 5. Default http://localhost:8000
  */
 export function getBackendUrl(): string {
+  // 1. If NEXT_PUBLIC_API_URL is explicitly configured and not default localhost, use it
+  if (
+    process.env.NEXT_PUBLIC_API_URL &&
+    !process.env.NEXT_PUBLIC_API_URL.includes("localhost:8000") &&
+    process.env.NEXT_PUBLIC_API_URL.startsWith("http")
+  ) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+
   if (typeof window !== "undefined") {
     const host = window.location.host;
     const protocol = window.location.protocol;
