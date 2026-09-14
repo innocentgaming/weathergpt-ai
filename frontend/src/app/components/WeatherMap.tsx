@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getBackendUrl } from '../utils/apiUrl';
+import { useTheme } from '../context/ThemeContext';
 
 // Fix Leaflet marker asset paths
 if (typeof window !== 'undefined') {
@@ -113,6 +114,7 @@ export default function WeatherMap({
   activeLocation = "Nashik",
   onMarkerClick 
 }: WeatherMapProps) {
+  const { isDark } = useTheme();
   const [selectedLayer, setSelectedLayer] = useState<MapLayer>(
     (initialActiveLayer as MapLayer) || 'temp'
   );
@@ -327,10 +329,15 @@ export default function WeatherMap({
           <MapResizeHandler />
           <ChangeView center={searchCenter} />
           
-          {/* High-Performance CartoDB Dark Matter Tiles for Sleek IMD Dark Cockpit View */}
+          {/* High-Performance Dynamic CartoDB Tiles (Dark Matter in dark mode, Voyager in light mode) */}
           <TileLayer
+            key={isDark ? 'carto-dark-matter' : 'carto-voyager'}
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            url={
+              isDark
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            }
             maxZoom={19}
           />
 
@@ -363,20 +370,20 @@ export default function WeatherMap({
                 }}
               >
                 <Popup>
-                  <div className="text-slate-900 font-sans p-1 min-w-[190px]">
-                    <h3 className="font-bold text-base border-b pb-1 text-slate-800 flex items-center justify-between">
+                  <div className="text-slate-900 dark:text-slate-100 font-sans p-1 min-w-[190px]">
+                    <h3 className="font-bold text-base border-b border-slate-200 dark:border-slate-700 pb-1 text-slate-800 dark:text-slate-100 flex items-center justify-between">
                       <span>{loc.name}</span>
                       {isCurrentSelected && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Active Focus</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-300/40">Active Focus</span>
                       )}
                     </h3>
-                    <div className="mt-2 space-y-1 text-xs text-slate-600">
-                      <p><span className="font-semibold text-slate-700">Live Temp:</span> {loc.temp}</p>
-                      <p><span className="font-semibold text-slate-700">Condition:</span> {loc.condition}</p>
-                      <p><span className="font-semibold text-slate-700">Rain Prob:</span> {loc.rain_prob}</p>
-                      <p><span className="font-semibold text-slate-700">Wind Speed:</span> {loc.wind_speed}</p>
+                    <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                      <p><span className="font-semibold text-slate-700 dark:text-slate-200">Live Temp:</span> {loc.temp}</p>
+                      <p><span className="font-semibold text-slate-700 dark:text-slate-200">Condition:</span> {loc.condition}</p>
+                      <p><span className="font-semibold text-slate-700 dark:text-slate-200">Rain Prob:</span> {loc.rain_prob}</p>
+                      <p><span className="font-semibold text-slate-700 dark:text-slate-200">Wind Speed:</span> {loc.wind_speed}</p>
                       <p>
-                        <span className="font-semibold text-slate-700">Risk Level:</span> 
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">Risk Level:</span> 
                         <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white
                           ${loc.risk === 'SEVERE' ? 'bg-red-500' : 
                             loc.risk === 'HIGH' ? 'bg-orange-500' : 
@@ -386,7 +393,7 @@ export default function WeatherMap({
                         </span>
                       </p>
                       {loc.alert !== "None" && (
-                        <p className="mt-1.5 text-[11px] text-red-600 bg-red-50 p-1.5 rounded font-semibold border border-red-200">
+                        <p className="mt-1.5 text-[11px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/60 p-1.5 rounded font-semibold border border-red-200 dark:border-red-800">
                           ⚠️ {loc.alert}
                         </p>
                       )}
