@@ -8,13 +8,12 @@
  *  • Background sync queue for failed requests
  */
 
-const CACHE_VERSION = "weathergpt-v2";
+const CACHE_VERSION = "weathergpt-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 
 // Assets to pre-cache on install
 const PRECACHE_URLS = [
-  "/",
   "/manifest.json",
 ];
 
@@ -27,35 +26,18 @@ const API_CACHE_PATTERNS = [
 
 // ── Install: pre-cache static assets ─────────────────────────────────────────
 self.addEventListener("install", (event) => {
-  if (self.location.hostname === "localhost" || self.location.hostname === "127.0.0.1") {
-    self.skipWaiting();
-    return;
-  }
-  event.waitUntil(
-    caches
-      .open(STATIC_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
-  );
+  self.skipWaiting();
 });
 
 // ── Activate: clean up old caches ─────────────────────────────────────────────
 self.addEventListener("activate", (event) => {
-  if (self.location.hostname === "localhost" || self.location.hostname === "127.0.0.1") {
-    event.waitUntil(
-      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-        .then(() => self.registration.unregister())
-        .then(() => self.clients.claim())
-    );
-    return;
-  }
   event.waitUntil(
     caches
       .keys()
       .then((cacheNames) =>
         Promise.all(
           cacheNames
-            .filter((name) => name.startsWith("weathergpt-") && name !== STATIC_CACHE && name !== API_CACHE)
+            .filter((name) => name !== STATIC_CACHE && name !== API_CACHE)
             .map((name) => caches.delete(name))
         )
       )
@@ -77,6 +59,12 @@ self.addEventListener("fetch", (event) => {
 
   // WebSocket — skip
   if (url.protocol === "ws:" || url.protocol === "wss:") return;
+
+  // Navigation (HTML pages): ALWAYS network-first to guarantee fresh releases
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirstWithCache(request, STATIC_CACHE, 3000));
+    return;
+  }
 
   // API routes: network-first, fall back to cache
   if (API_CACHE_PATTERNS.some((p) => p.test(url.pathname))) {
