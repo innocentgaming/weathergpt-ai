@@ -208,15 +208,15 @@ export default function LoginPage() {
 
         <div className="flex items-center gap-3">
           {/* 10-Language Switcher */}
-          <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs font-bold">
-            <Globe className="h-3.5 w-3.5 text-emerald-400" />
+          <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs">
+            <Globe className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             <select
               value={lang}
               onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-              className="bg-transparent text-slate-200 focus:outline-none cursor-pointer"
+              className="bg-transparent text-slate-800 dark:text-slate-200 focus:outline-none cursor-pointer"
             >
               {SUPPORTED_LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code} className="bg-slate-900 text-slate-200">
+                <option key={l.code} value={l.code} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
                   {l.name}
                 </option>
               ))}

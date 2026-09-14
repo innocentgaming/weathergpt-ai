@@ -208,16 +208,16 @@ export default function WeatherGPTApp() {
                   onClick={() => setActiveTab(item.id as ActiveTab)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-left group ${
                     activeTab === item.id
-                      ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:translate-x-1'
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 font-semibold'
+                      : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 hover:translate-x-1'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className={`material-symbols-outlined text-[20px] transition-transform duration-300 ${
                         activeTab === item.id
-                          ? 'text-emerald-400'
-                          : 'text-slate-400 group-hover:text-emerald-600'
+                          ? 'text-white'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-emerald-600'
                       }`}
                     >
                       {item.icon}
@@ -398,15 +398,15 @@ export default function WeatherGPTApp() {
               <select
                 value={currentLang}
                 onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-                className="bg-transparent border-0 outline-none text-xs font-semibold cursor-pointer pr-1"
+                className="bg-transparent border-0 outline-none text-xs font-semibold cursor-pointer pr-1 text-slate-800 dark:text-slate-100"
               >
-                <option value="en">EN (English)</option>
-                <option value="hi">HI (हिंदी)</option>
-                <option value="mr">MR (मराठी)</option>
-                <option value="ta">TA (தமிழ்)</option>
-                <option value="kn">KN (ಕನ್ನಡ)</option>
-                <option value="bn">BN (বাংলা)</option>
-                <option value="pa">PA (ਪੰਜਾਬੀ)</option>
+                <option value="en" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">EN (English)</option>
+                <option value="hi" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">HI (हिंदी)</option>
+                <option value="mr" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">MR (मराठी)</option>
+                <option value="ta" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">TA (தமிழ்)</option>
+                <option value="kn" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">KN (ಕನ್ನಡ)</option>
+                <option value="bn" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">BN (বাংলা)</option>
+                <option value="pa" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">PA (ਪੰਜਾਬੀ)</option>
               </select>
             </div>
 

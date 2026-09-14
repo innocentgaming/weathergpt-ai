@@ -287,16 +287,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {onVoiceQuery && (
                   <button
                     onClick={onVoiceQuery}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px] text-emerald-400 animate-pulse">mic</span>
+                    <span className="material-symbols-outlined text-[16px] text-white animate-pulse">mic</span>
                     <span>Voice Query</span>
                   </button>
                 )}
 
                 <button
                   onClick={() => setShowRadar(!showRadar)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all cursor-pointer"
                   title="Toggle S-Band Doppler Radar Console"
                 >
                   <Layers className="h-3.5 w-3.5 text-secondary" />
@@ -309,9 +309,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center py-6 relative z-10">
               {/* Big Temperature Display & Condition Graphic */}
               <div className="lg:col-span-6 flex items-center gap-5">
-                <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white flex items-center justify-center shadow-xl shadow-slate-900/15 ring-4 ring-emerald-500/20 shrink-0 group-hover:ring-emerald-500/30 transition-all duration-300">
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent rounded-3xl"></div>
-                  <span className="material-symbols-outlined text-[56px] text-emerald-300 drop-shadow-[0_4px_12px_rgba(16,185,129,0.5)] animate-float">
+                <div className="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-gradient-to-tr from-emerald-50 to-teal-100 dark:from-slate-900 dark:to-slate-800 border border-emerald-200/80 dark:border-slate-800 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shadow-lg shadow-emerald-900/5 ring-4 ring-emerald-500/20 shrink-0 group-hover:ring-emerald-500/30 transition-all duration-300">
+                  <span className="material-symbols-outlined text-[56px] text-emerald-600 dark:text-emerald-300 drop-shadow-sm animate-float">
                     {current.condition.toLowerCase().includes('rain')
                       ? 'rainy'
                       : current.condition.toLowerCase().includes('cloud')
@@ -320,7 +319,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       ? 'wb_sunny'
                       : 'partly_cloudy_day'}
                   </span>
-                  <span className="absolute -bottom-2 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500 text-slate-950 shadow-sm uppercase tracking-wider">
+                  <span className="absolute -bottom-2 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-sm uppercase tracking-wider">
                     {current.condition.split(' ')[0] || 'Synoptic'}
                   </span>
                 </div>
@@ -848,68 +847,68 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* RIGHT 4 COLUMNS: MULTIMODAL PHOTO WEATHER & METEOROLOGICAL RISK GAUGE */}
         <div className="xl:col-span-4 flex flex-col gap-6">
-          {/* 5. PHOTO WEATHER INTELLIGENCE (LENS COPILOT DROPZONE) with Shimmer Glow Wrapper */}
+          {/* 5. PHOTO WEATHER INTELLIGENCE (LENS COPILOT DROPZONE) */}
           <div className="glow-border-wrapper">
-            <div className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 rounded-3xl p-6 text-white border border-slate-800 shadow-xl shadow-slate-950/20 overflow-hidden flex flex-col gap-4 z-10">
-              <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="relative bg-white dark:bg-slate-900 rounded-3xl p-6 text-slate-900 dark:text-white border border-slate-200/90 dark:border-slate-800 shadow-card-smooth overflow-hidden flex flex-col gap-4 z-10">
+              <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/30">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/30">
                     <span className="material-symbols-outlined text-[20px]">camera_enhance</span>
                   </div>
                   <div>
-                    <h3 className="font-display font-bold text-sm text-white">Photo Weather Intelligence</h3>
-                    <span className="font-mono text-[10px] font-bold text-emerald-400 tracking-wider uppercase">
+                    <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">Photo Weather Intelligence</h3>
+                    <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">
                       Multimodal Copilot
                     </span>
                   </div>
                 </div>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold">
                   v3.2
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                 Snap or drag-and-drop a sky view. WeatherGPT vision classifies cloud altitude, optical moisture &amp; barometric trends instantly.
               </p>
 
               {/* Futuristic Lens Dropzone with hover animations */}
               <Link
                 href="/photo-analysis"
-                className="relative w-full h-40 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-emerald-400 bg-slate-900/60 group cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner text-center"
+                className="relative w-full h-40 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700/80 hover:border-emerald-500 bg-slate-50 dark:bg-slate-800/50 group cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner text-center"
               >
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
-                  <div className="w-28 h-28 rounded-full border border-dashed border-emerald-400 animate-spin" style={{ animationDuration: '20s' }}></div>
+                  <div className="w-28 h-28 rounded-full border border-dashed border-emerald-500 animate-spin" style={{ animationDuration: '20s' }}></div>
                 </div>
                 <div className="relative z-10 flex flex-col items-center gap-2">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <span className="material-symbols-outlined text-[24px]">add_a_photo</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-white block group-hover:text-emerald-300 transition-colors">
+                    <span className="text-xs font-bold text-slate-800 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                       Drop Sky Snapshot Here
                     </span>
-                    <span className="font-mono text-[10px] text-slate-400">JPG, PNG, HEIC up to 25MB</span>
+                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 font-medium">JPG, PNG, HEIC up to 25MB</span>
                   </div>
                 </div>
               </Link>
 
               {/* Feature Pills */}
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-emerald-300 flex items-center gap-1 transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Vision AI 3.5
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-emerald-800 dark:text-emerald-300 flex items-center gap-1 transition-colors font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Vision AI 3.5
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-sky-300 flex items-center gap-1 transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Live Radar Sync
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-sky-800 dark:text-sky-300 flex items-center gap-1 transition-colors font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Live Radar Sync
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-amber-300 flex items-center gap-1 transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Risk Engine
+                <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-[10px] font-mono text-amber-800 dark:text-amber-300 flex items-center gap-1 transition-colors font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Risk Engine
                 </span>
               </div>
 
               {/* Action Button */}
               <Link
                 href="/photo-analysis"
-                className="relative overflow-hidden w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all group cursor-pointer"
+                className="relative overflow-hidden w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all group cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">photo_camera</span>
                 <span>Analyze a Photo</span>
