@@ -160,31 +160,39 @@ export default function WeatherGPTApp() {
   );
 
   return (
-    <div className="app-shell flex w-full min-h-screen bg-background font-body-md text-on-surface antialiased">
+    <div className="app-shell flex w-full min-h-screen bg-background font-sans text-on-surface antialiased selection:bg-emerald-500 selection:text-white">
       {/* 1. SIDEBAR (Desktop) */}
-      <aside className="hidden md:flex flex-col justify-between w-64 shrink-0 bg-surface-container-lowest shadow-sm z-30 overflow-y-auto border-r border-surface-container-high select-none sticky top-0 h-screen">
-        <div className="p-space-md">
+      <aside className="hidden md:flex flex-col justify-between w-72 shrink-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200/80 dark:border-slate-800/80 shadow-[4px_0_24px_rgba(15,23,42,0.03)] z-50 select-none sticky top-0 h-screen overflow-y-auto">
+        <div className="p-5 flex flex-col">
           {/* Logo Header */}
-          <div className="flex items-center gap-space-sm pb-space-md border-b border-surface-container-high">
-            <div className="h-9 w-9 rounded-lg bg-primary-fixed/40 border border-primary/20 flex items-center justify-center text-primary shadow-xs">
-              <span className="material-symbols-outlined text-[22px]">cyclone</span>
+          <div className="flex items-center gap-3 pb-5 border-b border-slate-100 dark:border-slate-800">
+            <div className="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-emerald-900/10 ring-1 ring-black/5 shrink-0 bg-slate-900 text-emerald-400 flex items-center justify-center group cursor-pointer transition-transform hover:scale-105 duration-200">
+              <img
+                alt="WeatherGPT Logo"
+                className="w-full h-full object-cover relative z-10"
+                src="https://lh3.googleusercontent.com/aida/AEtjO1V9jb9vJF87ZFEsIdfsIo_9mEjQZZXYYEtJcdjdaTsjOVV9D9d9OKY6zxFYlzSexisKi39DMm0wAM3RkOpCfACqow3XbOisQ5JeM-7yFuEu6EnxCmR2SFknbEJMICptZ6KVQerKa5gd92gm0W6YI4NG-t9oOfprAe-G2oHdj9RXEy5nEoZ82iKAnYSdeAyLM7uD2m5YhS4zywpQ_22jCIpvkKjYdluIyen0iPdLMC_F15MKvV5W6gLedJ4"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+              <span className="material-symbols-outlined text-[26px] absolute">cyclone</span>
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">WeatherGPT</span>
-                <span className="font-label-mono-sm text-[10px] px-1.5 py-0.2 rounded bg-primary-fixed/40 text-primary font-bold">
-                  AI-OPS
+                <span className="font-display font-bold text-lg text-slate-900 dark:text-white tracking-tight">WeatherGPT</span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800 uppercase">
+                  AI 3.5
                 </span>
               </div>
-              <span className="font-label-mono-sm text-[10px] text-outline tracking-wider uppercase">
-                IMD Copilot • MoES
+              <span className="font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400 tracking-wider">
+                IMD COPILOT • MoES
               </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <div className="pt-space-md">
-            <span className="font-label-mono-bold text-label-mono-sm text-on-surface-variant uppercase tracking-wider block mb-space-xs">
+          <div className="pt-5">
+            <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">
               Intelligence Core
             </span>
             <nav className="flex flex-col gap-1">
@@ -198,79 +206,117 @@ export default function WeatherGPTApp() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as ActiveTab)}
-                  className={`flex items-center gap-space-sm px-space-sm py-2 rounded-lg transition-colors cursor-pointer text-left ${
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all duration-200 cursor-pointer text-left group ${
                     activeTab === item.id
-                      ? 'bg-primary text-on-primary font-bold shadow-xs'
-                      : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
+                      ? 'bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-sm font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:translate-x-1'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                  <span className="font-body-md text-body-md">{item.label}</span>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`material-symbols-outlined text-[20px] transition-transform duration-300 ${
+                        activeTab === item.id
+                          ? 'text-emerald-400'
+                          : 'text-slate-400 group-hover:text-emerald-600'
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  {item.id === 'dashboard' && (
+                    <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                    </span>
+                  )}
+                  {item.id === 'alerts' && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 shadow-xs">
+                      2
+                    </span>
+                  )}
                 </button>
               ))}
             </nav>
           </div>
 
           {/* Operational Modes Rail */}
-          <div className="pt-space-md">
-            <span className="font-label-mono-bold text-label-mono-sm text-on-surface-variant uppercase tracking-wider block mb-space-xs">
-              Operational Modes
+          <div className="pt-6">
+            <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">
+              Live Vector Engines
             </span>
-            <div className="flex flex-col gap-1">
+            <div className="space-y-1.5">
               {[
-                { id: 'farmer', label: 'Kisan / Agri', icon: 'agriculture' },
-                { id: 'aviation', label: 'Aviation Synoptic', icon: 'flight' },
-                { id: 'smartcity', label: 'Smart City Matrix', icon: 'location_city' },
+                { id: 'farmer', label: 'Kisan / Agri Synoptic', icon: 'agriculture', tag: 'active-ping', color: 'emerald' },
+                { id: 'aviation', label: 'Aviation Synoptic', icon: 'flight', tag: 'FL350', color: 'sky' },
+                { id: 'smartcity', label: 'Smart City Matrix', icon: 'location_city', tag: 'METRO', color: 'cyan' },
               ].map((m) => (
                 <button
                   key={m.id}
                   onClick={() => handleModeChange(m.id as UserRole)}
-                  className={`w-full flex items-center justify-between px-space-sm py-2 rounded-lg transition-colors cursor-pointer text-left ${
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all duration-200 cursor-pointer text-left ${
                     currentMode === m.id
-                      ? 'bg-surface-container-high text-primary font-bold'
-                      : 'bg-surface-container-low text-on-surface hover:bg-surface-container'
+                      ? 'bg-slate-100 dark:bg-slate-800 border-emerald-400/80 shadow-xs'
+                      : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200/60 dark:border-slate-800 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:translate-x-0.5'
                   }`}
                 >
-                  <div className="flex items-center gap-space-xs">
-                    <span className="material-symbols-outlined text-[18px]">{m.icon}</span>
-                    <span className="font-body-sm text-body-sm">{m.label}</span>
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`w-6 h-6 rounded-lg ${
+                        m.color === 'emerald'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                          : m.color === 'sky'
+                          ? 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300'
+                          : 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300'
+                      } flex items-center justify-center material-symbols-outlined text-[15px]`}
+                    >
+                      {m.icon}
+                    </span>
+                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200">{m.label}</span>
                   </div>
-                  {currentMode === m.id && <span className="w-2 h-2 rounded-full bg-radar-emerald animate-pulse"></span>}
+                  {m.tag === 'active-ping' ? (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-[10px] text-slate-400">{m.tag}</span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Advanced Tools */}
-          <div className="pt-space-md">
-            <span className="font-label-mono-bold text-label-mono-sm text-on-surface-variant uppercase tracking-wider block mb-space-xs">
-              Advanced Tools
+          <div className="pt-6">
+            <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">
+              Advanced Intelligence Tools
             </span>
             <div className="flex flex-col gap-1">
               <button
                 onClick={() => setSimModalOpen(true)}
-                className="flex w-full items-center gap-2 px-space-sm py-1.5 rounded-lg text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
+                className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">cyclone</span>
                 <span>Disaster Simulator</span>
               </button>
               <button
                 onClick={() => setEmergencyModalOpen(true)}
-                className="flex w-full items-center gap-2 px-space-sm py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-600/10 transition cursor-pointer"
+                className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-600/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
                 <span>Emergency Center</span>
               </button>
               <button
                 onClick={() => setClimateModalOpen(true)}
-                className="flex w-full items-center gap-2 px-space-sm py-1.5 rounded-lg text-xs font-semibold text-atmospheric-cyan hover:bg-cyan-500/10 transition cursor-pointer"
+                className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
                 <span>Climate Insights</span>
               </button>
               <button
                 onClick={() => setReportModalOpen(true)}
-                className="flex w-full items-center gap-2 px-space-sm py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition cursor-pointer"
+                className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">description</span>
                 <span>Export Report</span>
@@ -279,21 +325,24 @@ export default function WeatherGPTApp() {
           </div>
         </div>
 
-        {/* Photo Weather AI Card */}
-        <div className="p-space-md bg-surface-container-low rounded-t-xl mx-space-sm mb-space-sm border border-surface-container-high">
-          <div className="flex items-center gap-space-xs mb-1">
-            <span className="material-symbols-outlined text-primary text-[20px]">photo_camera</span>
-            <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">Photo Weather AI</span>
+        {/* Sidebar Mini Widget: Sky Lens */}
+        <div className="p-4 mx-3 mb-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white relative overflow-hidden shadow-lg shadow-slate-900/20 hover:shadow-xl transition-all duration-300">
+          <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"></div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center material-symbols-outlined text-[17px]">
+              center_focus_weak
+            </span>
+            <span className="font-display font-semibold text-xs tracking-tight text-white">Photo Weather AI</span>
           </div>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mb-space-sm leading-relaxed">
-            Upload sky snapshots for automated cloud vector &amp; optical barometry estimation.
+          <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
+            Upload sky snapshots for barometric &amp; cloud genus classification.
           </p>
           <Link
             href="/photo-analysis"
-            className="w-full flex items-center justify-center gap-space-xs py-2 px-space-sm rounded-lg bg-primary text-on-primary font-body-sm text-body-sm hover:bg-primary-container transition shadow-sm cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 hover:scale-[1.02] active:scale-[0.98] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[18px]">add_a_photo</span>
-            <span>Analyze Cloudscape</span>
+            <span className="material-symbols-outlined text-[16px]">add_a_photo</span>
+            <span>Analyze Sky Snap</span>
           </Link>
         </div>
       </aside>
@@ -301,11 +350,11 @@ export default function WeatherGPTApp() {
       {/* 2. MAIN CONTAINER & TOP HEADER */}
       <div className="main-content flex-1 min-w-0 flex flex-col min-h-screen bg-background w-full">
         {/* Top Header */}
-        <header className="sticky top-0 z-20 h-14 bg-surface-glass backdrop-blur-xl border-b border-surface-container-high shadow-xs flex items-center justify-between px-space-md md:px-space-lg w-full shrink-0">
+        <header className="sticky top-0 z-40 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800 shadow-xs flex items-center justify-between px-6 w-full shrink-0">
           {/* Universal Search Bar */}
-          <div className="flex items-center gap-space-sm flex-1 max-w-xl mr-2">
-            <div className="relative flex-1 flex items-center bg-surface-container-low rounded-lg px-space-sm py-1.5 border border-surface-container-high focus-within:border-primary transition">
-              <span className="material-symbols-outlined text-outline text-[20px] mr-space-xs">search</span>
+          <div className="flex items-center gap-3 flex-1 max-w-xl mr-3">
+            <div className="relative w-full flex items-center bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all shadow-xs">
+              <span className="material-symbols-outlined text-slate-400 text-[19px] mr-2">search</span>
               <input
                 type="text"
                 value={searchLocation}
@@ -315,65 +364,73 @@ export default function WeatherGPTApp() {
                     changeLocation(searchLocation);
                   }
                 }}
-                placeholder="Search Observatory, City or Coordinates (Default: Nashik)..."
-                className="bg-transparent border-0 outline-none w-full font-body-sm text-body-sm text-on-surface placeholder:text-outline"
+                placeholder="Search Observatory, AWS Station, City (e.g., Pune, IMD-411005)..."
+                className="bg-transparent border-0 outline-none w-full text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 font-medium"
               />
               <button
                 onClick={handleUseCurrentLocation}
                 disabled={weatherLoading}
-                title="Acquire Current GPS Fix"
-                className="flex items-center gap-space-xs px-2 py-1 rounded bg-surface-container-highest text-on-surface hover:bg-primary hover:text-on-primary transition cursor-pointer disabled:opacity-50"
+                title="Acquire GPS Location"
+                className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm border border-slate-200 dark:border-slate-600 text-[11px] font-mono font-medium hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
-                <span className="material-symbols-outlined text-[16px]">my_location</span>
-                <span className="font-label-mono-sm text-label-mono-sm font-bold">GPS</span>
+                <span className="material-symbols-outlined text-[14px] text-emerald-600 dark:text-emerald-400">my_location</span>
+                <span>GPS</span>
               </button>
             </div>
           </div>
 
           {/* Right Header Strip */}
-          <div className="flex items-center gap-2 md:gap-space-md">
+          <div className="flex items-center gap-3">
             {/* WIS Telemetry */}
-            <div className="hidden xl:flex items-center gap-space-xs px-space-sm py-1.5 rounded-full bg-surface-container-high border border-surface-container">
-              <span className="w-2 h-2 rounded-full bg-radar-emerald animate-ping"></span>
-              <span className="font-label-mono-sm text-label-mono-sm text-on-surface">
-                WIS 2.0 / MQTT: <span className="text-primary font-bold">ACTIVE {weather?.wis2_telemetry?.latency_ms ?? 12}ms</span>
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-mono text-xs shadow-sm hover:border-emerald-300 transition-all">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
               </span>
-              <span className="text-outline font-label-mono-sm text-label-mono-sm">• Online</span>
+              <span>
+                WIS 2.0 / MQTT: <strong className="font-bold text-emerald-950 dark:text-emerald-200">ACTIVE {weather?.wis2_telemetry?.latency_ms ?? 12}ms</strong>
+              </span>
             </div>
 
             {/* Language Selector */}
-            <div className="flex items-center gap-space-xs px-2 py-1.5 rounded-lg bg-surface-container-low border border-surface-container-high">
-              <span className="material-symbols-outlined text-on-surface-variant text-[18px]">translate</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-100 border border-slate-200/60 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200 transition-colors">
+              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[17px]">translate</span>
               <select
                 value={currentLang}
                 onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
-                className="bg-transparent border-0 outline-none font-body-sm text-body-sm text-on-surface cursor-pointer pr-1"
+                className="bg-transparent border-0 outline-none text-xs font-semibold cursor-pointer pr-1"
               >
                 <option value="en">EN (English)</option>
                 <option value="hi">HI (हिंदी)</option>
                 <option value="mr">MR (मराठी)</option>
                 <option value="ta">TA (தமிழ்)</option>
+                <option value="kn">KN (ಕನ್ನಡ)</option>
+                <option value="bn">BN (বাংলা)</option>
+                <option value="pa">PA (ਪੰਜਾਬੀ)</option>
               </select>
             </div>
 
             {/* Theme Toggle */}
             <ThemeToggle />
 
+            {/* Divider */}
+            <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+
             {/* User Profile Pill */}
             <button
               onClick={() => setAuthModalOpen(true)}
-              className="flex items-center gap-space-xs pl-space-xs cursor-pointer hover:opacity-90 transition"
+              className="flex items-center gap-2.5 pl-1 group cursor-pointer hover:opacity-90 transition text-left"
             >
               <div className="flex flex-col text-right hidden sm:flex">
-                <span className="font-body-sm text-body-sm text-on-surface font-semibold">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-tight">
                   {currentUser ? currentUser.name : 'Guest Explorer'}
                 </span>
-                <span className="font-label-mono-sm text-label-mono-sm text-outline">
+                <span className="font-mono text-[10px] text-slate-400 tracking-wider">
                   {currentUser ? currentUser.role.toUpperCase() : 'IMD-CIVIL-PUBLIC'}
                 </span>
               </div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm">
-                <span className="material-symbols-outlined text-[18px]">person</span>
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-700 text-white flex items-center justify-center shadow-md shadow-slate-900/10 ring-2 ring-white dark:ring-slate-800 group-hover:ring-emerald-300 transition-all">
+                <span className="material-symbols-outlined text-[19px]">person</span>
               </div>
             </button>
           </div>
@@ -453,14 +510,17 @@ export default function WeatherGPTApp() {
         </main>
       </div>
 
-      {/* Floating Chat Copilot Trigger Button */}
+      {/* Floating Global Copilot Button */}
       <aside aria-label="Synoptic Copilot Chat Trigger" className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setIsChatOpen(true)}
-          className="w-14 h-14 rounded-full bg-primary text-on-primary shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition cursor-pointer"
-          title="Open AI Weather Copilot"
+          className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white flex items-center justify-center shadow-xl shadow-emerald-600/30 transition-all hover:scale-110 active:scale-95 group cursor-pointer"
+          title="Launch WeatherGPT Intelligent Copilot"
         >
-          <MessageSquare className="h-6 w-6" />
+          <span className="material-symbols-outlined text-[26px] group-hover:rotate-12 transition-transform">chat_bubble</span>
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+          </span>
         </button>
       </aside>
 

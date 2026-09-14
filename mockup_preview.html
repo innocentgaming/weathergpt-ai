@@ -3,861 +3,990 @@
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<title>WeatherGPT • IMD Copilot • MoES</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<style>
-    @layer base {
-      html, body { margin: 0; padding: 0; }
-      body { overscroll-behavior: none; }
-      main > :first-child { margin-top: 0 !important; }
-      main > :last-child { margin-bottom: 0 !important; }
-    }
-    ::-webkit-scrollbar { display: none; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script>
+<script id="tailwind-config">
     tailwind.config = {
+      darkMode: "class",
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#f0f9ff',
-              100: '#e0f2fe',
-              500: '#0284c7',
-              600: '#0369a1',
-              700: '#075985',
-            }
+            "primary": "#059669",
+            "primary-dark": "#047857",
+            "primary-light": "#34D399",
+            "radar-emerald": "#10B981",
+            "atmospheric-cyan": "#06B6D4",
+            "sky-glow": "#38BDF8",
+            "severe-amber": "#F59E0B",
+            "hazard-rose": "#EF4444",
+            "navy-deep": "#0B1120",
+            "navy-panel": "#111827",
+            "navy-subtle": "#1E293B",
+            "canvas-ice": "#F8FAFC",
+            "surface-glass": "rgba(255, 255, 255, 0.88)",
+            "border-glass": "rgba(226, 232, 240, 0.8)",
           },
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
+            sans: ["Plus Jakarta Sans", "sans-serif"],
+            display: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+          },
+          boxShadow: {
+            "glow-emerald": "0 0 25px -4px rgba(16, 185, 129, 0.25)",
+            "glow-sky": "0 0 25px -4px rgba(56, 189, 248, 0.25)",
+            "card-smooth": "0 10px 30px -10px rgba(15, 23, 42, 0.04), 0 2px 8px -2px rgba(15, 23, 42, 0.02)",
+            "card-glass": "0 8px 32px 0 rgba(15, 23, 42, 0.05)",
           }
         }
       }
-    };
+    }
   </script>
+<style>
+    @layer base {
+      body {
+        overscroll-behavior: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      height: 4px;
+      width: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    .grid-lines {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 0.4; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .animate-pulse-ring {
+      animation: pulse-ring 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .backdrop-blur-glass {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    /* Ambient float keyframe */
+    @keyframes float-subtle {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .animate-float {
+      animation: float-subtle 4s ease-in-out infinite;
+    }
+
+    /* Shimmer border glow effect for high-priority widgets */
+    @keyframes border-glow-shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .glow-border-wrapper {
+      position: relative;
+    }
+    .glow-border-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -1.5px;
+      border-radius: 1.6rem;
+      background: linear-gradient(90deg, rgba(16,185,129,0.35), rgba(6,182,212,0.25), rgba(16,185,129,0.5), rgba(59,130,246,0.2));
+      background-size: 300% 300%;
+      animation: border-glow-shimmer 8s linear infinite;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+
+    /* Spline curve animated stroke dash */
+    @keyframes spline-flow {
+      0% { stroke-dashoffset: 200; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .curve-flow-line {
+      stroke-dasharray: 8 6;
+      animation: spline-flow 18s linear infinite;
+    }
+
+    /* Gauge ring fill animation */
+    .gauge-progress-circle {
+      stroke-dasharray: 414.69;
+      stroke-dashoffset: 414.69;
+      transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Progress bar width animation */
+    .animated-bar {
+      transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen">
-<!-- Crisp White Fixed Sidebar -->
-<aside class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 z-50 flex flex-col justify-between select-none shadow-sm">
-<div class="flex flex-col h-full overflow-hidden">
-<!-- Logo Header -->
-<div class="h-14 px-4 flex items-center gap-2.5 border-b border-slate-100 bg-white">
-<div class="h-8 w-8 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shadow-sm">
-<span class="material-symbols-outlined text-[20px]">cyclone</span>
+<body class="bg-[#F4F6FB] text-slate-800 font-sans antialiased min-h-screen selection:bg-emerald-500 selection:text-white">
+<!-- LEFT SIDEBAR -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-white/95 backdrop-blur-xl border-r border-slate-200/80 z-50 flex flex-col justify-between shadow-[4px_0_24px_rgba(15,23,42,0.03)]">
+<div class="p-5 flex flex-col">
+<!-- App Brand / Identity -->
+<div class="flex items-center gap-3 pb-5 border-b border-slate-100">
+<div class="relative w-11 h-11 rounded-xl overflow-hidden shadow-md shadow-emerald-900/10 ring-1 ring-black/5 shrink-0 bg-slate-900 group cursor-pointer transition-transform hover:scale-105 duration-200">
+<img alt="WeatherGPT Logo" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1V9jb9vJF87ZFEsIdfsIo_9mEjQZZXYYEtJcdjdaTsjOVV9D9d9OKY6zxFYlzSexisKi39DMm0wAM3RkOpCfACqow3XbOisQ5JeM-7yFuEu6EnxCmR2SFknbEJMICptZ6KVQerKa5gd92gm0W6YI4NG-t9oOfprAe-G2oHdj9RXEy5nEoZ82iKAnYSdeAyLM7uD2m5YhS4zywpQ_22jCIpvkKjYdluIyen0iPdLMC_F15MKvV5W6gLedJ4"/>
 </div>
 <div class="flex flex-col">
 <div class="flex items-center gap-1.5">
-<span class="font-bold text-sm tracking-tight text-slate-900 leading-none">WeatherGPT</span>
-<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-sky-100/70 text-sky-700 font-semibold border border-sky-200">AI-OPS</span>
+<span class="font-display font-bold text-lg text-slate-900 tracking-tight">WeatherGPT</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200/60 uppercase">AI 3.5</span>
 </div>
-<span class="font-mono text-[10px] text-slate-400 tracking-wider uppercase mt-0.5">IMD Copilot • MoES</span>
+<span class="font-mono text-[11px] font-medium text-slate-500 tracking-wider">IMD COPILOT • MoES</span>
 </div>
 </div>
 <!-- Navigation Links -->
-<nav class="flex-1 overflow-y-auto px-3 py-3 space-y-4">
-<div class="space-y-1">
-<div class="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Intelligence Core</div>
-<a aria-current="page" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-sky-50 text-sky-700 font-medium border border-sky-100 shadow-sm" href="#">
-<div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[18px] text-sky-600">radar</span>
-<span class="text-xs">Live Telemetry</span>
+<div class="pt-5">
+<span class="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">Intelligence Core</span>
+<nav class="flex flex-col gap-1">
+<a aria-current="page" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900 text-white shadow-sm font-semibold transition-all group hover:bg-slate-800" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-emerald-400 text-[20px] group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">sensors</span>
+<span class="text-sm">Live Telemetry</span>
 </div>
-<span class="flex h-2 w-2 relative">
+<span class="relative flex h-2.5 w-2.5 items-center justify-center">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-600 transition-colors">radar</span>
+<span class="text-sm font-medium">Radar &amp; Maps</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-600 transition-colors">satellite_alt</span>
+<span class="text-sm font-medium">Satellite &amp; NWP</span>
+</a>
+<a class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all hover:translate-x-1 duration-200 group" href="#">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[20px] text-amber-500 group-hover:scale-110 transition-transform">warning</span>
+<span class="text-sm font-medium">Severe Alerts</span>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-800 shadow-xs">2</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-600 transition-colors">sailing</span>
+<span class="text-sm font-medium">Defense &amp; Marine</span>
+</a>
+<a class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 transition-all hover:translate-x-1 duration-200 group" href="#">
+<span class="material-symbols-outlined text-[20px] text-slate-400 group-hover:text-emerald-600 transition-colors">tune</span>
+<span class="text-sm font-medium">System Settings</span>
+</a>
+</nav>
+</div>
+<!-- Operational Sector Modes in Sidebar -->
+<div class="pt-6">
+<span class="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">Live Vector Engines</span>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 hover:border-emerald-300/70 hover:translate-x-0.5 transition-all cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center material-symbols-outlined text-[15px]">agriculture</span>
+<span class="text-xs font-medium text-slate-800">Kisan / Agri Synoptic</span>
+</div>
+<span class="relative flex h-2 w-2">
 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
 <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
 </span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">layers</span>
-<span>Radar &amp; Maps</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">alt_route</span>
-<span>Route Intel</span>
-</a>
-<a class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
+</div>
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 hover:border-sky-300/70 hover:translate-x-0.5 transition-all cursor-pointer">
 <div class="flex items-center gap-2.5">
-<span class="material-symbols-outlined text-[18px] text-slate-400">warning</span>
-<span>Severe Alerts</span>
+<span class="w-6 h-6 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center material-symbols-outlined text-[15px]">flight</span>
+<span class="text-xs font-medium text-slate-800">Aviation Synoptic</span>
 </div>
-<span class="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 font-bold border border-rose-200">2</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">terminal</span>
-<span>Command Center</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">settings</span>
-<span>System Settings</span>
-</a>
+<span class="font-mono text-[10px] text-slate-400">FL350</span>
 </div>
-<div class="space-y-1">
-<div class="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Operational Modes</div>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">agriculture</span>
-<span>Kisan / Agri</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">flight</span>
-<span>Aviation Synoptic</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">location_city</span>
-<span>Smart City Matrix</span>
-</a>
+<div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/60 hover:bg-slate-100/80 hover:border-cyan-300/70 hover:translate-x-0.5 transition-all cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-6 h-6 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center material-symbols-outlined text-[15px]">location_city</span>
+<span class="text-xs font-medium text-slate-800">Smart City Matrix</span>
 </div>
-<div class="space-y-1">
-<div class="px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Advanced Tools</div>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">tsunami</span>
-<span>Disaster Simulator</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">fmd_bad</span>
-<span>Emergency Center</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">query_stats</span>
-<span>Climate Insights</span>
-</a>
-<a class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-xs font-medium" href="#">
-<span class="material-symbols-outlined text-[18px] text-slate-400">file_download</span>
-<span>Export Report</span>
-</a>
+<span class="font-mono text-[10px] text-slate-400">METRO</span>
 </div>
-</nav>
-<!-- Sidebar Mini Card -->
-<div class="p-3 bg-white border-t border-slate-100">
-<div class="p-3 rounded-xl bg-slate-50 border border-slate-200 shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex flex-col gap-1.5">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-1.5 text-sky-600">
-<span class="material-symbols-outlined text-[16px]">filter_drama</span>
-<span class="font-mono text-[10px] tracking-wider uppercase font-bold">Sky Vision AI</span>
 </div>
-<span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-bold">READY</span>
 </div>
-<p class="text-xs text-slate-500 leading-tight">Instant cloud genus &amp; optical barometry analyzer</p>
-<button class="mt-1 w-full py-1.5 px-2 rounded-lg bg-white hover:bg-sky-50 text-sky-700 border border-slate-200 hover:border-sky-200 text-center font-mono text-[11px] tracking-wider uppercase transition-colors flex items-center justify-center gap-1 font-semibold" type="button">
-<span>Launch Lens</span>
-<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</div>
+<!-- Sidebar Mini Widget: Sky Lens -->
+<div class="p-4 mx-3 mb-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white relative overflow-hidden shadow-lg shadow-slate-900/20 hover:shadow-xl transition-all duration-300">
+<div class="absolute -right-6 -bottom-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center gap-2 mb-1.5">
+<span class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center material-symbols-outlined text-[17px]">center_focus_weak</span>
+<span class="font-display font-semibold text-xs tracking-tight text-white">Photo Weather AI</span>
+</div>
+<p class="text-[11px] text-slate-300 leading-relaxed mb-3">Upload sky snapshots for barometric &amp; cloud genus classification.</p>
+<button class="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 hover:scale-[1.02] active:scale-[0.98] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[16px]">add_a_photo</span>
+<span>Analyze Sky Snap</span>
 </button>
-</div>
-</div>
 </div>
 </aside>
-<!-- Main Content Shell -->
-<div class="pl-64 min-h-screen flex flex-col bg-slate-50">
-<!-- Top Crisp Header -->
-<header class="fixed top-0 left-64 right-0 h-14 bg-white/95 backdrop-blur-md z-40 px-5 border-b border-slate-200 flex items-center justify-between gap-4 shadow-sm">
-<div class="flex items-center gap-4 flex-1">
-<div class="relative flex items-center w-80 max-w-sm">
-<span class="material-symbols-outlined absolute left-3 text-[18px] text-slate-400 pointer-events-none">search</span>
-<input class="w-full pl-9 pr-8 py-1.5 rounded-lg bg-slate-100 text-slate-900 placeholder:text-slate-400 text-xs border border-transparent focus:border-sky-500 focus:bg-white focus:outline-none transition-all" placeholder="Search synoptic station, ICAO, pin..." type="text"/>
-<button class="absolute right-2 text-slate-400 hover:text-sky-600 transition-colors" title="GPS Lock" type="button">
-<span class="material-symbols-outlined text-[16px]">my_location</span>
+<!-- MAIN CANVAS WRAPPER -->
+<div class="pl-72">
+<!-- TOP EXECUTIVE APP BAR -->
+<header class="fixed top-0 left-72 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/70 z-40 flex items-center justify-between px-6">
+<!-- Search & Station Quick Jump -->
+<div class="flex items-center gap-3 flex-1 max-w-xl">
+<div class="relative w-full flex items-center bg-slate-100/90 border border-slate-200/80 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 focus-within:bg-white transition-all shadow-xs">
+<span class="material-symbols-outlined text-slate-400 text-[19px] mr-2">search</span>
+<input class="bg-transparent border-0 outline-none w-full text-xs text-slate-800 placeholder:text-slate-400 font-medium" placeholder="Search Observatory, AWS Station, City (e.g., Pune, IMD-411005)..." type="text"/>
+<button class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white text-slate-700 shadow-sm border border-slate-200 text-[11px] font-mono font-medium hover:text-emerald-700 hover:border-emerald-300 active:scale-95 transition-all" title="Acquire GPS Location">
+<span class="material-symbols-outlined text-[14px] text-emerald-600">my_location</span>
+<span>GPS</span>
 </button>
 </div>
-<div class="hidden xl:flex items-center gap-1.5">
-<span class="font-mono text-[10px] text-slate-400 uppercase font-semibold mr-0.5">Hubs:</span>
-<button class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono transition-colors" type="button">Nashik</button>
-<button class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono transition-colors" type="button">Pune</button>
-<button class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono transition-colors" type="button">Mumbai</button>
-<button class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono transition-colors" type="button">Delhi</button>
-<button class="px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-mono transition-colors" type="button">Bengaluru</button>
 </div>
-</div>
-<div class="flex items-center gap-3.5">
-<div class="hidden lg:flex items-center gap-2 font-mono text-xs">
-<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600">
-<span class="flex h-2 w-2 relative">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+<!-- Status Hub & Profile -->
+<div class="flex items-center gap-3">
+<!-- WIS 2.0 Realtime Telemetry Pulse Badge -->
+<div class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/90 border border-emerald-200 text-emerald-800 font-mono text-xs shadow-sm hover:border-emerald-300 transition-all">
+<span class="relative flex h-2.5 w-2.5">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
 </span>
-<span>WIS 2.0 / MQTT:</span>
-<span class="text-emerald-700 font-bold">12ms</span>
+<span>WIS 2.0 / MQTT: <strong class="font-bold text-emerald-950">ACTIVE 12ms</strong></span>
 </div>
-<div class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
-<span class="material-symbols-outlined text-[15px] text-sky-600">dns</span>
-<span class="font-medium">NWP: GFS-12Z</span>
-</div>
-</div>
-<div class="flex items-center gap-2 pl-1">
 <!-- Language Selector -->
-<div class="flex items-center rounded-lg bg-slate-100 p-0.5 border border-slate-200">
-<button class="px-2 py-0.5 rounded bg-white text-sky-700 font-mono text-[10px] font-bold shadow-sm" type="button">EN</button>
-<button class="px-2 py-0.5 rounded text-slate-500 hover:text-slate-800 font-mono text-[10px] transition-colors" type="button">HI</button>
-<button class="px-2 py-0.5 rounded text-slate-500 hover:text-slate-800 font-mono text-[10px] transition-colors" type="button">MR</button>
-<button class="px-2 py-0.5 rounded text-slate-500 hover:text-slate-800 font-mono text-[10px] transition-colors" type="button">TA</button>
+<div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100/80 hover:bg-slate-100 border border-slate-200/60 text-xs text-slate-700 transition-colors">
+<span class="material-symbols-outlined text-slate-500 text-[17px]">translate</span>
+<select class="bg-transparent border-0 outline-none text-xs font-semibold cursor-pointer pr-1">
+<option>EN (English)</option>
+<option>HI (हिंदी)</option>
+<option>MR (मराठी)</option>
+<option>TA (தமிழ்)</option>
+</select>
 </div>
-<!-- Active Light Mode Toggle -->
-<button class="h-8 w-8 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-600 transition-colors" title="Light Mode Active" type="button">
-<span class="material-symbols-outlined text-[18px]">light_mode</span>
+<!-- Light/Dark Toggle -->
+<button class="w-9 h-9 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 hover:scale-105 active:scale-95 flex items-center justify-center text-slate-600 transition-all shadow-sm" title="Toggle Lighting Theme">
+<span class="material-symbols-outlined text-[19px]">light_mode</span>
 </button>
-<!-- User Profile -->
-<div class="flex items-center gap-2 pl-1">
-<div class="hidden 2xl:flex flex-col text-right">
-<span class="text-xs font-semibold text-slate-800 leading-tight">Guest Explorer</span>
-<span class="font-mono text-[10px] text-slate-400 leading-tight">IMD-CIVIL-PUBLIC</span>
+<!-- Divider -->
+<div class="h-6 w-[1px] bg-slate-200"></div>
+<!-- User Identity -->
+<div class="flex items-center gap-2.5 pl-1 group cursor-pointer">
+<div class="flex flex-col text-right hidden sm:flex">
+<span class="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight">Guest Explorer</span>
+<span class="font-mono text-[10px] text-slate-400 tracking-wider">IMD-CIVIL-PUBLIC</span>
 </div>
-<div class="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center shadow-sm">
-<span class="material-symbols-outlined text-[18px]">person</span>
-</div>
+<div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 to-slate-700 text-white flex items-center justify-center shadow-md shadow-slate-900/10 ring-2 ring-white group-hover:ring-emerald-300 transition-all">
+<span class="material-symbols-outlined text-[19px]">person</span>
 </div>
 </div>
 </div>
 </header>
-<!-- Main Container Body -->
-<main class="w-full px-6 pt-14 flex-1">
-<div class="flex flex-col w-full text-slate-800 pb-16 space-y-4 mt-4">
-<!-- Prominent Hubs Horizontal Command Strip -->
-<section class="w-full bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm flex items-center gap-3 overflow-x-auto no-scrollbar">
-<div class="flex items-center gap-1.5 pl-1 shrink-0 font-mono text-[11px] text-slate-500 uppercase tracking-wider font-semibold">
-<span class="material-symbols-outlined text-sky-600 text-[18px]">hub</span>
-<span class="text-slate-800">Prominent Hubs:</span>
+<!-- CONTENT BODY -->
+<main class="pt-16 pb-12 px-6 lg:px-8 max-w-[1720px] mx-auto grid-lines">
+<div class="flex flex-col gap-6 pt-6">
+<!-- 1. METEOROLOGICAL HUBS TICKER STRIP -->
+<section class="flex items-center gap-3 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none">
+<div class="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl bg-white border border-slate-200/90 shadow-sm text-slate-700">
+<span class="material-symbols-outlined text-emerald-600 text-[18px]">hub</span>
+<span class="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500">Synoptic Hubs:</span>
 </div>
-<div class="flex items-center gap-2 min-w-max">
-<!-- Hub: Pune -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">🌧️</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Pune</span>
-<span class="font-mono text-[11px] text-slate-500">27°C • Rain</span>
-</div>
+<div class="flex items-center gap-2 shrink-0" id="hub-selector-container">
+<!-- Active Pune -->
+<button class="hub-pill flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-medium text-xs shadow-md shadow-emerald-600/25 ring-1 ring-emerald-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-600/30 transition-all duration-200 cursor-pointer">
+<span class="text-sm animate-float">🌧️</span>
+<span class="font-bold">Pune</span>
+<span class="font-mono text-[11px] text-emerald-100">27°C</span>
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
 </button>
-<!-- Hub: Mumbai -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">🌊</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Mumbai</span>
-<span class="font-mono text-[11px] text-slate-500">29°C • Coast</span>
-</div>
+<!-- Hubs -->
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">🌊</span>
+<span>Mumbai</span>
+<span class="font-mono text-[11px] text-slate-500">29°C</span>
+<span class="text-[10px] font-mono text-cyan-600 bg-cyan-50 px-1 rounded">Coast</span>
 </button>
-<!-- Hub: Delhi -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">☀️</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Delhi</span>
-<span class="font-mono text-[11px] text-slate-500">38°C • Warm</span>
-</div>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">☀️</span>
+<span>Delhi</span>
+<span class="font-mono text-[11px] text-amber-600 font-bold">38°C</span>
+<span class="text-[10px] font-mono text-amber-700 bg-amber-50 px-1 rounded">Heat</span>
 </button>
-<!-- Hub: Nashik (Active Selected) -->
-<button class="px-3 py-1.5 rounded-lg bg-sky-50 border border-sky-300 text-sky-800 shadow-sm flex items-center gap-2 text-left">
-<span class="text-base">🍇</span>
-<div class="flex flex-col">
-<div class="flex items-center gap-1.5">
-<span class="text-xs font-bold text-sky-900">Nashik</span>
-<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-</div>
-<span class="font-mono text-[11px] text-sky-700 font-semibold">26°C • Agri (Active)</span>
-</div>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">🍇</span>
+<span>Nashik</span>
+<span class="font-mono text-[11px] text-slate-500">26°C</span>
+<span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">Agri</span>
 </button>
-<!-- Hub: Bengaluru -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">💻</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Bengaluru</span>
-<span class="font-mono text-[11px] text-slate-500">24°C • Cool</span>
-</div>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">💻</span>
+<span>Bengaluru</span>
+<span class="font-mono text-[11px] text-slate-500">24°C</span>
+<span class="text-[10px] font-mono text-sky-700 bg-sky-50 px-1 rounded">Cool</span>
 </button>
-<!-- Hub: Jaipur -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">🏰</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Jaipur</span>
-<span class="font-mono text-[11px] text-slate-500">35°C • Clear</span>
-</div>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">🏰</span>
+<span>Jaipur</span>
+<span class="font-mono text-[11px] text-slate-500">35°C</span>
 </button>
-<!-- Hub: Goa -->
-<button class="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2 text-left group">
-<span class="text-base">🏖️</span>
-<div class="flex flex-col">
-<span class="text-xs font-semibold text-slate-800 group-hover:text-sky-600 transition-colors">Goa</span>
-<span class="font-mono text-[11px] text-slate-500">30°C • Beach</span>
-</div>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">⛰️</span>
+<span>Lonavala</span>
+<span class="font-mono text-[11px] text-slate-500">21°C</span>
+<span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1 rounded">Ghats</span>
+</button>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">🌲</span>
+<span>Shimla</span>
+<span class="font-mono text-[11px] text-sky-600">18°C</span>
+</button>
+<button class="hub-pill flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 border border-slate-200 text-slate-700 text-xs font-medium shadow-sm transition-all duration-200 cursor-pointer">
+<span class="text-sm">🏛️</span>
+<span>Kolkata</span>
+<span class="font-mono text-[11px] text-slate-500">32°C</span>
 </button>
 </div>
 </section>
-<!-- Macro Synoptic Split Layout -->
-<div class="grid grid-cols-1 xl:grid-cols-16 gap-4 items-start">
-<!-- LEFT CANVASES (10 Columns on Desktop) -->
-<div class="xl:col-span-10 flex flex-col space-y-4 min-w-0">
-<!-- Synoptic City Header & Model Selector Card -->
-<section class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3">
-<div class="flex flex-wrap items-center justify-between gap-3">
-<div class="flex flex-col">
-<div class="flex items-center gap-2">
-<span class="font-mono text-[11px] text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-1.5">
-<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                      IMD / Open-Meteo (Live Telemetry)
+<!-- 2. MAIN 12-COLUMN METEOROLOGICAL WORKSPACE -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+<!-- LEFT 8 COLUMNS: EPIC SYNOPTIC HERO, SECTOR MODES & 7-DAY DAY-WISE INSPECTOR -->
+<div class="xl:col-span-8 flex flex-col gap-6">
+<!-- EPIC MAIN WEATHER HERO CARD -->
+<div class="relative bg-gradient-to-br from-white via-white to-emerald-50/30 rounded-3xl p-6 lg:p-8 border border-slate-200/90 shadow-card-smooth overflow-hidden group">
+<!-- Atmospheric Background Glow Elements -->
+<div class="absolute -right-20 -top-20 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-700"></div>
+<div class="absolute right-40 -bottom-20 w-80 h-80 bg-sky-400/10 rounded-full blur-3xl pointer-events-none group-hover:scale-105 transition-transform duration-700"></div>
+<!-- Top Bar within Hero: Location & Model Consensus Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10 border-b border-slate-100 pb-5">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+                      IMD / Open-Meteo Synoptic Live
                     </span>
-<span class="text-slate-400 font-mono text-xs">• Updated 3m ago</span>
+<span class="font-mono text-[11px] text-slate-400">• Updated 3m ago</span>
 </div>
-<div class="flex flex-wrap items-baseline gap-2 mt-1">
-<h1 class="text-2xl font-bold tracking-tight text-slate-900">
-                      Nashik, Maharashtra India
-                    </h1>
-<span class="font-mono text-[11px] px-2 py-0.5 rounded-md bg-slate-100 text-sky-800 font-semibold border border-slate-200">
-                      IN (411005 / 422001)
-                    </span>
+<div class="flex items-baseline gap-2.5">
+<h1 class="font-display font-extrabold text-2xl lg:text-3xl text-slate-900 tracking-tight">PUNE, MAHARASHTRA</h1>
+<span class="font-mono text-xs font-bold text-slate-500 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">IN (411005)</span>
 </div>
 </div>
-<!-- Quick Tools: Telemetry & Voice Query -->
-<div class="flex items-center gap-2">
-<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 font-mono text-xs text-emerald-700 shadow-xs">
-<span class="material-symbols-outlined text-[16px] text-emerald-600">cell_tower</span>
-<span class="font-semibold">WIS 2.0 / MQTT: ACTIVE (12ms)</span>
+<!-- Model Switcher & Realtime Sync Badges -->
+<div class="flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-colors">
+<span class="material-symbols-outlined text-slate-500 text-[17px]">public</span>
+<span class="text-slate-400 text-[11px] font-mono">NWP:</span>
+<select class="bg-transparent border-0 outline-none text-xs font-bold text-slate-800 cursor-pointer pr-1">
+<option>Ensemble Consensus (GFS+ECMWF+WRF)</option>
+<option>ECMWF IFS (0.1° High-Res)</option>
+<option>NOAA GFS (0.25° Global)</option>
+<option>IMD Meso WRF (3km Special)</option>
+</select>
 </div>
-<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs shadow-sm transition-all active:scale-95" type="button">
-<span class="material-symbols-outlined text-[16px]">mic</span>
+<button class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all">
+<span class="material-symbols-outlined text-[16px] text-emerald-400 animate-pulse">mic</span>
 <span>Voice Query</span>
 </button>
 </div>
 </div>
-<!-- Model Consensus Selector Strip -->
-<div class="pt-1 flex flex-wrap items-center gap-2 border-t border-slate-100">
-<div class="flex items-center gap-1.5 text-slate-400 font-mono text-[11px] mr-1 uppercase font-semibold">
-<span class="material-symbols-outlined text-[16px] text-sky-600">public</span>
-<span>NWP Model:</span>
+<!-- Main Hero Temperature & Dynamic Vector Graphic Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center py-6 relative z-10">
+<!-- Big Temperature Display & Condition Graphic -->
+<div class="lg:col-span-6 flex items-center gap-5">
+<div class="relative w-24 h-24 lg:w-28 lg:h-28 rounded-3xl bg-gradient-to-tr from-slate-900 to-slate-800 flex items-center justify-center text-white shadow-xl shadow-slate-900/15 ring-4 ring-emerald-500/20 shrink-0 group-hover:ring-emerald-500/30 transition-all duration-300">
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent rounded-3xl"></div>
+<span class="material-symbols-outlined text-[56px] text-emerald-300 drop-shadow-[0_4px_12px_rgba(16,185,129,0.5)] animate-float">cloud_sync</span>
+<!-- Small status pill overlay -->
+<span class="absolute -bottom-2 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500 text-slate-950 shadow-sm uppercase tracking-wider">Scattered</span>
 </div>
-<!-- Active: Ensemble Consensus -->
-<button class="px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 font-mono text-xs font-semibold border border-sky-200 shadow-xs">
-                  Ensemble Consensus (GFS+ECMWF+WRF)
-                </button>
-<!-- NOAA GFS -->
-<button class="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-mono text-xs border border-slate-200 transition-colors">
-                  NOAA GFS (0.25° Global)
-                </button>
-<!-- ECMWF IFS -->
-<button class="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-mono text-xs border border-slate-200 transition-colors">
-                  ECMWF IFS (0.1° High-Res)
-                </button>
-<!-- DWD ICON -->
-<button class="px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 font-mono text-xs border border-slate-200 transition-colors">
-                  DWD ICON / WRF (13km Meso)
-                </button>
-</div>
-</section>
-<!-- Primary Weather Telemetry Hero & Sensor Quad -->
-<section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-<!-- Left Hero Card: Live Readings -->
-<div class="lg:col-span-6 p-5 rounded-xl bg-gradient-to-br from-white via-sky-50/40 to-slate-50 border border-slate-200 shadow-sm flex flex-col justify-between relative overflow-hidden">
-<div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-sky-200/30 blur-3xl pointer-events-none"></div>
-<div class="flex items-start justify-between relative z-10">
-<div class="flex items-center gap-3">
-<div class="w-13 h-13 p-3 rounded-xl bg-sky-100 text-sky-600 border border-sky-200 flex items-center justify-center shadow-xs">
-<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">rainy</span>
-</div>
-<div>
-<span class="font-mono text-[11px] text-sky-700 uppercase font-bold tracking-wider">Live Condition</span>
-<h3 class="text-xl text-slate-900 font-bold leading-tight">Rain Showers</h3>
-<span class="font-mono text-xs text-slate-500">(35% Coverage • Microburst Safe)</span>
-</div>
-</div>
-<span class="font-mono text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">SYNOPTIC VERIFIED</span>
-</div>
-<!-- Hero Number & Quick Telemetry Cluster -->
-<div class="my-4 flex items-baseline justify-between relative z-10">
+<div class="flex flex-col">
 <div class="flex items-baseline gap-1">
-<span class="text-6xl font-extrabold tracking-tighter text-slate-900 font-mono">26</span>
-<span class="text-2xl font-light text-sky-600">°C</span>
+<span class="font-display font-extrabold text-5xl lg:text-6xl text-slate-900 tracking-tighter">24.7</span>
+<span class="font-display font-light text-2xl lg:text-3xl text-emerald-600">°C</span>
 </div>
-<!-- Vector Stack -->
-<div class="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-xs text-slate-600">
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-[16px] text-amber-600">thermostat</span>
-<span>Feels: <strong class="text-slate-900 font-bold">28°C</strong></span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-display font-bold text-slate-800 text-base">Overcast Clouds</span>
+<span class="font-mono text-xs text-slate-400 font-medium">(35% Deck)</span>
 </div>
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-[16px] text-sky-600">water_drop</span>
-<span>Humidity: <strong class="text-slate-900 font-bold">82%</strong></span>
-</div>
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-[16px] text-emerald-600">air</span>
-<span>Wind: <strong class="text-slate-900 font-bold">16 km/h WNW</strong></span>
-</div>
-<div class="flex items-center gap-1.5">
-<span class="material-symbols-outlined text-[16px] text-sky-600">umbrella</span>
-<span>Rain Prob: <strong class="text-sky-700 font-bold">65%</strong></span>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center gap-1 font-mono text-xs text-emerald-700 bg-emerald-100/60 hover:bg-emerald-100 px-2 py-0.5 rounded-md font-semibold transition-colors">
+<span class="material-symbols-outlined text-[14px]">air</span> 12.1 km/h WSW
+                      </span>
 </div>
 </div>
 </div>
-<!-- Mini Atmospheric Bar Gauge -->
-<div class="relative z-10 pt-2 flex flex-col gap-1 border-t border-slate-100">
-<div class="flex justify-between font-mono text-xs text-slate-500">
-<span>Dynamic Rain Vector</span>
-<span class="text-emerald-700 font-bold">0.8 mm/hr steady</span>
+<!-- Secondary Atmospheric Vector Telemetry Matrix -->
+<div class="lg:col-span-6 grid grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80">
+<div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
+<span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-amber-500 text-[17px]">thermostat</span>
+                      Feels Like
+                    </span>
+<span class="font-mono font-bold text-xs text-slate-900">29.5°C</span>
 </div>
-<div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-<div class="h-full bg-gradient-to-r from-sky-500 to-emerald-500 rounded-full" style="width: 65%;"></div>
+<div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
+<span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sky-500 text-[17px]">water_drop</span>
+                      Humidity
+                    </span>
+<span class="font-mono font-bold text-xs text-slate-900">78%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
+<span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-emerald-500 text-[17px]">rainy</span>
+                      Precip Chance
+                    </span>
+<span class="font-mono font-bold text-xs text-emerald-600">35%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-100 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
+<span class="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-purple-500 text-[17px]">compress</span>
+                      Dew Point
+                    </span>
+<span class="font-mono font-bold text-xs text-slate-900">20.8°C</span>
 </div>
 </div>
 </div>
-<!-- Right 4-Cell Telemetry HUD Grid -->
-<div class="lg:col-span-6 grid grid-cols-2 gap-3">
-<!-- Barometer -->
-<div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-sky-300 transition-colors">
+<!-- Synoptic Instrument Metric Bar (4 Uniform Atmospheric Telemetry Tiles) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 relative z-10">
+<!-- Tile 1: Barometer -->
+<div class="metric-card p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
 <div class="flex items-center justify-between">
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Barometer</span>
-<span class="material-symbols-outlined text-[16px] text-sky-600">speed</span>
+<span class="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">Barometer</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600 text-[16px] transition-transform group-hover:rotate-45">speed</span>
 </div>
-<div class="my-1.5">
 <div class="flex items-baseline gap-1">
-<span class="text-2xl font-mono text-slate-900 font-bold">1009</span>
-<span class="font-mono text-xs text-slate-500">hPa</span>
+<span class="font-mono font-bold text-lg text-slate-900">1009</span>
+<span class="font-mono text-xs text-slate-400 font-normal">hPa</span>
 </div>
-<div class="flex items-center gap-1 text-emerald-600 font-mono text-xs mt-0.5">
+<div class="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
 <span class="material-symbols-outlined text-[14px]">trending_flat</span>
-<span>Steady (±0.2 hPa)</span>
+<span>Steady Trend</span>
 </div>
 </div>
-<!-- Sparkline SVG -->
-<svg class="w-full h-5 text-sky-500" fill="none" viewbox="0 0 100 20">
-<path d="M0,10 Q25,12 50,9 T100,10" stroke="currentColor" stroke-linecap="round" stroke-width="2.5"></path>
-<circle cx="100" cy="10" fill="currentColor" r="3"></circle>
-</svg>
-</div>
-<!-- Visibility -->
-<div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-emerald-300 transition-colors">
+<!-- Tile 2: Visibility -->
+<div class="metric-card p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
 <div class="flex items-center justify-between">
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Visibility</span>
-<span class="material-symbols-outlined text-[16px] text-emerald-600">visibility</span>
+<span class="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">Visibility</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-emerald-600 text-[16px] transition-transform group-hover:scale-110">visibility</span>
 </div>
-<div class="my-1.5">
 <div class="flex items-baseline gap-1">
-<span class="text-2xl font-mono text-slate-900 font-bold">10</span>
-<span class="font-mono text-xs text-slate-500">km</span>
+<span class="font-mono font-bold text-lg text-slate-900">10.0</span>
+<span class="font-mono text-xs text-slate-400 font-normal">km</span>
 </div>
-<div class="flex items-center gap-1 text-emerald-600 font-mono text-xs mt-0.5">
-<span class="material-symbols-outlined text-[14px]">visibility</span>
+<div class="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
 <span>Clear Horizon</span>
 </div>
 </div>
-<div class="w-full flex items-center gap-1">
-<span class="h-1.5 flex-1 bg-emerald-500 rounded-full"></span>
-<span class="h-1.5 flex-1 bg-emerald-500 rounded-full"></span>
-<span class="h-1.5 flex-1 bg-emerald-500 rounded-full"></span>
-<span class="h-1.5 flex-1 bg-emerald-200 rounded-full"></span>
-</div>
-</div>
-<!-- Solar UV Index -->
-<div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-amber-300 transition-colors">
+<!-- Tile 3: UV Index -->
+<div class="metric-card p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-amber-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
 <div class="flex items-center justify-between">
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Solar UV Index</span>
-<span class="material-symbols-outlined text-[16px] text-amber-500">wb_sunny</span>
+<span class="font-mono text-[10px] font-bold text-slate-400 group-hover:text-amber-700 uppercase tracking-wider transition-colors">Solar UV</span>
+<span class="material-symbols-outlined text-amber-500 group-hover:scale-110 text-[16px] transition-transform">sunny</span>
 </div>
-<div class="my-1.5">
 <div class="flex items-baseline gap-1">
-<span class="text-2xl font-mono text-slate-900 font-bold">5</span>
-<span class="font-mono text-xs text-slate-400">/ 10</span>
+<span class="font-mono font-bold text-lg text-amber-600">5.0</span>
+<span class="font-mono text-xs text-slate-400 font-normal">/ 11</span>
 </div>
-<div class="flex items-center gap-1 text-amber-600 font-mono text-xs mt-0.5">
-<span class="material-symbols-outlined text-[14px]">light_mode</span>
-<span>Moderate Exposure</span>
-</div>
-</div>
-<div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-<div class="h-full bg-amber-500 rounded-full" style="width: 50%;"></div>
+<div class="flex items-center gap-1 text-[11px] text-amber-700 font-medium">
+<span>Moderate (Sun Hat)</span>
 </div>
 </div>
-<!-- Air Quality (CPCB) -->
-<div class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col justify-between group hover:border-emerald-300 transition-colors">
+<!-- Tile 4: AQI -->
+<div class="metric-card p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
 <div class="flex items-center justify-between">
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Air Quality (CPCB)</span>
-<span class="material-symbols-outlined text-[16px] text-emerald-600">eco</span>
+<span class="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">AQI (CPCB)</span>
+<span class="material-symbols-outlined text-emerald-500 group-hover:scale-110 text-[16px] transition-transform">air</span>
 </div>
-<div class="my-1.5">
 <div class="flex items-baseline gap-1.5">
-<span class="text-2xl font-mono text-emerald-600 font-bold">Good</span>
-<span class="font-mono text-xs text-slate-700">(AQI 42)</span>
+<span class="font-mono font-bold text-lg text-emerald-600">42</span>
+<span class="font-mono text-[11px] font-bold text-emerald-700 uppercase">Good</span>
 </div>
-<div class="flex items-center gap-1 text-slate-500 font-mono text-xs mt-0.5">
-<span>PM2.5: <strong class="text-slate-800">18 µg/m³</strong></span>
-</div>
-</div>
-<div class="flex items-center gap-1.5 text-[11px] font-mono text-emerald-700 font-semibold">
-<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-<span>Optimal Respiration</span>
+<div class="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+<span>PM2.5: 18 µg/m³</span>
 </div>
 </div>
 </div>
-</section>
-<!-- Operational Mode Sector Selector & Live Advisory Banner -->
-<section class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3">
-<div class="flex flex-wrap items-center justify-between gap-3">
+</div>
+<!-- 3. SECTOR OPERATIONAL INTELLIGENCE MODE CARD -->
+<div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-smooth flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-sky-600 text-[20px]">tune</span>
-<span class="text-sm text-slate-900 font-bold">Operational Weather Intelligence Mode</span>
-</div>
-<!-- Segmented Pill Bar -->
-<div class="flex items-center bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
-<!-- Kisan / Agri (Active) -->
-<button class="px-3 py-1 rounded bg-sky-600 text-white font-mono text-[11px] font-bold flex items-center gap-1.5 shadow-sm">
-<span>🌾</span>
-<span>Kisan / Agri</span>
-</button>
-<!-- Aviation -->
-<button class="px-3 py-1 rounded hover:bg-slate-200 text-slate-700 font-mono text-[11px] font-medium flex items-center gap-1.5 transition-colors">
-<span>✈️</span>
-<span>Aviation Synoptic</span>
-</button>
-<!-- Smart City -->
-<button class="px-3 py-1 rounded hover:bg-slate-200 text-slate-700 font-mono text-[11px] font-medium flex items-center gap-1.5 transition-colors">
-<span>🏙️</span>
-<span>Smart City Matrix</span>
-</button>
-<!-- Public -->
-<button class="px-3 py-1 rounded hover:bg-slate-200 text-slate-700 font-mono text-[11px] font-medium flex items-center gap-1.5 transition-colors">
-<span>👥</span>
-<span>Public Defense</span>
-</button>
+<span class="w-8 h-8 rounded-xl bg-slate-900 text-emerald-400 flex items-center justify-center material-symbols-outlined text-[18px]">domain_verification</span>
+<div>
+<h2 class="font-display font-bold text-base text-slate-900">Sector Operational Intelligence</h2>
+<span class="text-xs text-slate-400">Contextual decision-matrices for agriculture, flight synoptics &amp; urban infrastructure</span>
 </div>
 </div>
-<!-- Verified Sector Advisory Card -->
-<div class="p-4 rounded-lg bg-slate-50 border border-slate-200 flex items-start gap-3.5 shadow-xs">
-<div class="p-2 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 border border-emerald-200">
-<span class="material-symbols-outlined text-[22px]">verified</span>
+<!-- Mode Selector Switcher -->
+<div class="flex items-center p-1 rounded-xl bg-slate-100 border border-slate-200/80 gap-1" id="mode-selector">
+<button class="mode-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-emerald-700 font-bold text-xs shadow-sm hover:shadow transition-all duration-200 cursor-pointer" data-mode="kisan">
+<span>🌾</span> Kisan / Agri
+                  </button>
+<button class="mode-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-xs transition-all duration-200 cursor-pointer" data-mode="aviation">
+<span>✈️</span> Aviation Synoptic
+                  </button>
+<button class="mode-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 font-medium text-xs transition-all duration-200 cursor-pointer" data-mode="city">
+<span>🏙️</span> Smart City
+                  </button>
+</div>
+</div>
+<!-- Contextual Advisory Banner (Kisan Selected Mode) -->
+<div class="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/40 to-white border border-emerald-200/70 flex items-start gap-3.5 transition-all duration-300" id="sector-advisory-banner">
+<div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-600/20">
+<span class="material-symbols-outlined text-[20px] animate-pulse">psychology</span>
 </div>
 <div class="flex flex-col">
 <div class="flex items-center gap-2">
-<span class="text-sm font-bold text-slate-900">Sector Advisory: Outdoor Conditions Pleasant</span>
-<span class="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">AGRI-OPTIMIZED</span>
+<span class="font-display font-bold text-sm text-slate-900" id="sector-advisory-title">Sector Advisory: Field Operations Optimal</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-200 text-emerald-800 uppercase flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-ping"></span>
+  Active Advisory
+</span>
 </div>
-<p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                    Intermittent rainfall expected across Nashik grape agriculture belts (Dindori, Niphad, Chandwad). Standard outdoor weather. Light umbrella recommended for evening travel. Spray scheduling window safe between 10:00 - 13:00 IST.
+<p class="text-xs text-slate-600 mt-1 leading-relaxed" id="sector-advisory-text">
+                    Pleasant outdoor conditions across Pune rural &amp; peri-urban blocks. Evapotranspiration index steady at 3.8 mm/day. Favorable window for foliar fertilizer spraying and scheduled micro-irrigation until 18:00 IST. Evening precipitation risk is minimal (35%).
                   </p>
 </div>
 </div>
-</section>
-<!-- Synoptic Outlook: 7-Day Matrix & Sun Vectors -->
-<section class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col space-y-4">
-<div class="flex flex-wrap items-center justify-between gap-2">
-<div class="flex flex-col">
-<span class="font-mono text-[11px] text-sky-700 uppercase font-bold tracking-wider">Synoptic Outlook</span>
-<h2 class="text-base text-slate-900 font-bold">Day-Wise Forecast &amp; Meteorological Inspection</h2>
 </div>
-<div class="flex items-center gap-2 font-mono text-xs text-slate-500">
-<span>Selected Horizon:</span>
-<span class="px-2.5 py-1 rounded-md bg-sky-50 text-sky-700 font-bold border border-sky-200">Today (26°C / 65% Rain)</span>
+<!-- 4. DAY-WISE 7-DAY SYNOPTIC FORECAST & METEOROLOGICAL INSPECTION -->
+<div class="bg-white rounded-3xl p-6 lg:p-7 border border-slate-200/90 shadow-card-smooth flex flex-col gap-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+<div>
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+</span>
+<span class="font-mono text-xs font-bold text-slate-400 uppercase tracking-wider">Synoptic Outlook</span>
+</div>
+<h2 class="font-display font-bold text-xl text-slate-900 tracking-tight">Day-Wise Forecast &amp; Meteorological Inspection</h2>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-slate-500 font-medium">Selected Frame:</span>
+<span class="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-mono text-xs font-bold transition-all" id="forecast-frame-label">Today (27°C / Low Risk)</span>
 </div>
 </div>
-<!-- 7-Day Card Strip -->
-<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+<!-- 7-Day Horizontal Card Matrix (Interactive Date Selector) -->
+<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5" id="forecast-card-grid">
 <!-- Day 1: Today (Selected) -->
-<div class="p-3 rounded-lg bg-sky-50/70 border-2 border-sky-400 text-slate-900 flex flex-col items-center text-center shadow-xs cursor-pointer">
-<span class="font-mono text-[11px] font-bold text-sky-800">Today</span>
-<span class="text-2xl my-1">🌧️</span>
-<span class="font-mono text-xs font-bold text-slate-900">26°/21°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-sky-700 font-semibold mt-1">
-<span class="material-symbols-outlined text-[12px]">water_drop</span>
-<span>65%</span>
+<button class="forecast-day-card active p-3.5 rounded-2xl bg-slate-900 text-white shadow-md shadow-slate-900/15 flex flex-col items-center text-center gap-1.5 ring-2 ring-emerald-400 hover:-translate-y-1 hover:shadow-xl transition-all duration-200 text-left cursor-pointer" data-day="Today" data-risk="Low Risk" data-temp="27°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-emerald-400 uppercase">Today</span>
+<span class="text-2xl my-1 animate-float">⛅</span>
+<span class="font-display font-bold text-base leading-none text-white">27°<span class="text-xs font-normal text-slate-400">/22°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-sky-300">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>35%</span>
 </div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-sky-100 text-sky-800 font-semibold border border-sky-200">Moderate</span>
-</div>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase mt-1">Low Risk</span>
+</button>
 <!-- Day 2: Friday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Friday</span>
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Friday" data-risk="Moderate" data-temp="28°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Friday</span>
 <span class="text-2xl my-1">🌦️</span>
-<span class="font-mono text-xs font-semibold text-slate-800">25°/20°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-slate-600 mt-1">
-<span class="material-symbols-outlined text-[12px] text-sky-600">water_drop</span>
-<span>45%</span>
-</div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Low Risk</span>
-</div>
-<!-- Day 3: Saturday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Saturday</span>
-<span class="text-2xl my-1">⛅</span>
-<span class="font-mono text-xs font-semibold text-slate-800">27°/22°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-slate-600 mt-1">
-<span class="material-symbols-outlined text-[12px] text-sky-600">water_drop</span>
-<span>20%</span>
-</div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Low Risk</span>
-</div>
-<!-- Day 4: Sunday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Sunday</span>
-<span class="text-2xl my-1">⛅</span>
-<span class="font-mono text-xs font-semibold text-slate-800">28°/23°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-slate-600 mt-1">
-<span class="material-symbols-outlined text-[12px] text-sky-600">water_drop</span>
-<span>15%</span>
-</div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Low Risk</span>
-</div>
-<!-- Day 5: Monday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Monday</span>
-<span class="text-2xl my-1">⛅</span>
-<span class="font-mono text-xs font-semibold text-slate-800">29°/24°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-slate-600 mt-1">
-<span class="material-symbols-outlined text-[12px] text-sky-600">water_drop</span>
-<span>10%</span>
-</div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Low Risk</span>
-</div>
-<!-- Day 6: Tuesday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Tuesday</span>
-<span class="text-2xl my-1">🌦️</span>
-<span class="font-mono text-xs font-semibold text-slate-800">27°/22°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-slate-600 mt-1">
-<span class="material-symbols-outlined text-[12px] text-sky-600">water_drop</span>
-<span>50%</span>
-</div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">Low Risk</span>
-</div>
-<!-- Day 7: Wednesday -->
-<div class="p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors flex flex-col items-center text-center cursor-pointer">
-<span class="font-mono text-[11px] text-slate-500 font-medium">Wednesday</span>
-<span class="text-2xl my-1">🌧️</span>
-<span class="font-mono text-xs font-semibold text-slate-800">26°/21°</span>
-<div class="flex items-center gap-1 font-mono text-[11px] text-sky-700 mt-1">
-<span class="material-symbols-outlined text-[12px]">water_drop</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">28°<span class="text-xs font-normal text-slate-400">/23°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-sky-600">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
 <span>60%</span>
 </div>
-<span class="font-mono text-[9px] px-1.5 py-0.5 mt-1.5 rounded bg-sky-100 text-sky-800 font-semibold border border-sky-200">Moderate</span>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase mt-1">Moderate</span>
+</button>
+<!-- Day 3: Saturday -->
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Saturday" data-risk="High Risk" data-temp="26°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Saturday</span>
+<span class="text-2xl my-1">⛈️</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">26°<span class="text-xs font-normal text-slate-400">/21°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-rose-600">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>85%</span>
 </div>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 uppercase mt-1">High Risk</span>
+</button>
+<!-- Day 4: Sunday -->
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Sunday" data-risk="Severe" data-temp="25°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Sunday</span>
+<span class="text-2xl my-1">🌧️</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">25°<span class="text-xs font-normal text-slate-400">/20°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-rose-600 font-bold">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>90%</span>
 </div>
-<!-- Diurnal Solar Vector & Hourly Interpolation Chart -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2">
-<!-- Ephemeris (Sunrise/Sunset) Card -->
-<div class="md:col-span-4 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Ephemeris &amp; Daylight</span>
-<div class="flex items-center justify-between my-2">
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300 uppercase mt-1">Severe</span>
+</button>
+<!-- Day 5: Monday -->
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Monday" data-risk="Low Risk" data-temp="27°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Monday</span>
+<span class="text-2xl my-1">🌦️</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">27°<span class="text-xs font-normal text-slate-400">/22°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-sky-600">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>45%</span>
+</div>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase mt-1">Low Risk</span>
+</button>
+<!-- Day 6: Tuesday -->
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Tuesday" data-risk="Low Risk" data-temp="29°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Tuesday</span>
+<span class="text-2xl my-1">⛅</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">29°<span class="text-xs font-normal text-slate-400">/24°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-sky-600">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>20%</span>
+</div>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase mt-1">Low Risk</span>
+</button>
+<!-- Day 7: Wednesday -->
+<button class="forecast-day-card p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/90 hover:-translate-y-1 hover:shadow-md border border-slate-200/80 text-slate-800 transition-all duration-200 flex flex-col items-center text-center gap-1.5 cursor-pointer" data-day="Wednesday" data-risk="Low Risk" data-temp="30°C">
+<span class="font-mono text-[11px] font-bold tracking-wider text-slate-500 uppercase">Wednesday</span>
+<span class="text-2xl my-1">☀️</span>
+<span class="font-display font-bold text-base leading-none text-slate-900">30°<span class="text-xs font-normal text-slate-400">/25°</span></span>
+<div class="flex items-center gap-0.5 text-[11px] font-mono text-sky-600">
+<span class="material-symbols-outlined text-[13px]">water_drop</span>
+<span>10%</span>
+</div>
+<span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase mt-1">Low Risk</span>
+</button>
+</div>
+<!-- Day Detailed Inspection & Diurnal Interpolation Box -->
+<div class="p-5 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-4">
+<div>
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-amber-500 text-[24px]">wb_twilight</span>
-<div>
-<span class="font-mono text-[10px] text-slate-500 block">Sunrise</span>
-<span class="text-xs font-bold text-slate-900">06:15 AM</span>
+<span class="font-mono text-xs font-bold text-emerald-600 uppercase">Today • 12-Hour Micro Synoptic</span>
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+</div>
+<span class="font-display font-bold text-lg text-slate-900">Partly Cloudy (High: 27°C | Low: 22°C)</span>
+<p class="text-xs text-slate-500">Pleasant outdoor weather. Standard precautions for humidity &amp; evening moisture spikes.</p>
+</div>
+<!-- Solar / Celestial Ephemeris -->
+<div class="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-slate-200/80 shadow-2xs">
+<div class="flex items-center gap-2 group cursor-default">
+<span class="material-symbols-outlined text-amber-500 text-[22px] group-hover:rotate-45 transition-transform duration-300">wb_twilight</span>
+<div class="flex flex-col">
+<span class="font-mono text-[10px] text-slate-400 uppercase">Sunrise</span>
+<span class="font-mono font-bold text-xs text-slate-900">06:15 AM</span>
 </div>
 </div>
+<div class="h-6 w-[1px] bg-slate-200"></div>
+<div class="flex items-center gap-2 group cursor-default">
+<span class="material-symbols-outlined text-indigo-400 text-[22px] group-hover:-rotate-12 transition-transform duration-300">bedtime</span>
+<div class="flex flex-col">
+<span class="font-mono text-[10px] text-slate-400 uppercase">Sunset</span>
+<span class="font-mono font-bold text-xs text-slate-900">06:45 PM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Diurnal Precipitation & Hourly Curve Graph -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-indigo-500 text-[24px]">bedtime</span>
-<div>
-<span class="font-mono text-[10px] text-slate-500 block">Sunset</span>
-<span class="text-xs font-bold text-slate-900">06:45 PM</span>
+<span class="material-symbols-outlined text-slate-500 text-[16px]">show_chart</span>
+<span class="font-mono text-xs font-bold text-slate-700 uppercase tracking-wider">Diurnal Precipitation &amp; Thermal Vector</span>
 </div>
+<span class="font-mono text-[11px] text-slate-400">Hourly Consensus Interpolation (00:00 - 23:00 IST)</span>
 </div>
-</div>
-<!-- Solar Path Arc -->
-<div class="relative w-full h-12 flex items-center justify-center">
-<svg class="w-full h-10" fill="none" viewbox="0 0 200 40">
-<path class="text-slate-300" d="M10,38 Q100,-10 190,38" stroke="currentColor" stroke-dasharray="4 4" stroke-width="2"></path>
-<circle class="text-amber-500 fill-amber-400 stroke-amber-600" cx="120" cy="12" r="5" stroke-width="1.5"></circle>
-</svg>
-<span class="absolute bottom-0 text-[10px] font-mono text-slate-400">Solar Zenith Peak: 12:30 IST</span>
-</div>
-</div>
-<!-- Diurnal Hourly Curve Interpolation -->
-<div class="md:col-span-8 p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-<div class="flex items-center justify-between mb-1">
-<div>
-<span class="font-mono text-[10px] uppercase tracking-wider text-slate-400 font-bold">Diurnal Precipitation &amp; Thermal Vector</span>
-<span class="font-mono text-[11px] text-slate-500 block">Hourly Interpolation (00:00 - 23:00 IST)</span>
-</div>
-<div class="flex items-center gap-3 font-mono text-[11px]">
-<span class="flex items-center gap-1.5 text-sky-700 font-medium">
-<span class="w-2 h-2 rounded-full bg-sky-600"></span>Rain Prob %
-                      </span>
-<span class="flex items-center gap-1.5 text-amber-700 font-medium">
-<span class="w-2 h-2 rounded-full bg-amber-500"></span>Temp °C
-                      </span>
-</div>
-</div>
-<!-- SVG Dual-Axis Chart with Light Aesthetic -->
-<div class="relative w-full h-24 my-1">
-<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 500 100">
+<div class="w-full bg-white rounded-xl p-3 border border-slate-200/80 flex flex-col justify-end relative overflow-hidden group">
+<svg class="w-full h-24 overflow-visible" fill="none" preserveaspectratio="none" viewbox="0 0 700 90">
 <defs>
-<lineargradient id="rainGradLight" x1="0%" x2="0%" y1="0%" y2="100%">
-<stop offset="0%" stop-color="#0284c7" stop-opacity="0.25"></stop>
-<stop offset="100%" stop-color="#0284c7" stop-opacity="0.0"></stop>
+<lineargradient id="rainGlow" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#10B981" stop-opacity="0.38"></stop>
+<stop offset="100%" stop-color="#10B981" stop-opacity="0.02"></stop>
 </lineargradient>
 </defs>
-<!-- Horizontal Grid Lines -->
-<line stroke="#e2e8f0" stroke-dasharray="2 2" stroke-width="1" x1="0" x2="500" y1="25" y2="25"></line>
-<line stroke="#e2e8f0" stroke-dasharray="2 2" stroke-width="1" x1="0" x2="500" y1="60" y2="60"></line>
-<line stroke="#e2e8f0" stroke-width="1" x1="0" x2="500" y1="95" y2="95"></line>
-<!-- Rain Area Curve -->
-<path d="M 0,90 Q 70,80 140,70 T 280,30 T 380,50 T 500,85 L 500,100 L 0,100 Z" fill="url(#rainGradLight)"></path>
-<!-- Rain Line -->
-<path d="M 0,90 Q 70,80 140,70 T 280,30 T 380,50 T 500,85" fill="none" stroke="#0284c7" stroke-width="2.5"></path>
-<!-- Temp Line -->
-<path d="M 0,60 Q 100,55 200,45 T 350,25 T 500,65" fill="none" stroke="#f59e0b" stroke-dasharray="4 3" stroke-width="2.2"></path>
-<!-- Peak Indicator at 15:00 -->
-<circle cx="280" cy="30" fill="#0284c7" r="5" stroke="#ffffff" stroke-width="2"></circle>
+<!-- Area fill -->
+<path d="M0,75 Q70,72 140,60 T280,50 T420,24 T560,38 T700,68 L700,90 L0,90 Z" fill="url(#rainGlow)"></path>
+<!-- Main trend stroke with animated flow -->
+<path class="curve-flow-line" d="M0,75 Q70,72 140,60 T280,50 T420,24 T560,38 T700,68" stroke="#059669" stroke-linecap="round" stroke-width="3.5"></path>
+<!-- Subtle guide horizontal dashed line -->
+<line stroke="#E2E8F0" stroke-dasharray="4 4" stroke-width="1" x1="0" x2="700" y1="50" y2="50"></line>
+<!-- Peak marker indicator with radar beacon ring -->
+<circle class="animate-ping" cx="420" cy="24" fill="#10B981" opacity="0.6" r="9"></circle>
+<circle cx="420" cy="24" fill="#047857" r="5.5" stroke="#FFFFFF" stroke-width="2.5"></circle>
 </svg>
-</div>
-<!-- Chart Horizontal Axis Labels -->
-<div class="grid grid-cols-6 text-center font-mono text-[11px] text-slate-500">
-<span>06:00<br/><strong class="text-sky-700">10%</strong></span>
-<span>09:00<br/><strong class="text-sky-700">15%</strong></span>
-<span>12:00<br/><strong class="text-sky-700">25%</strong></span>
-<span class="text-sky-800 font-bold bg-sky-100/60 rounded py-0.5">15:00<br/><strong class="text-sky-700 font-bold">35% Peak</strong></span>
-<span>18:00<br/><strong class="text-sky-700">30%</strong></span>
-<span>21:00<br/><strong class="text-sky-700">15%</strong></span>
-</div>
+<!-- Hourly Legends -->
+<div class="flex justify-between items-center px-1 pt-2 border-t border-slate-100 font-mono text-[11px] text-slate-500">
+<span>06:00 <strong class="text-slate-700">(10%)</strong></span>
+<span>09:00 <strong class="text-slate-700">(15%)</strong></span>
+<span>12:00 <strong class="text-slate-700">(25%)</strong></span>
+<span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded shadow-2xs border border-emerald-200/50">15:00 (35% Peak)</span>
+<span>18:00 <strong class="text-slate-700">(30%)</strong></span>
+<span>21:00 <strong class="text-slate-700">(15%)</strong></span>
 </div>
 </div>
-</section>
 </div>
-<!-- RIGHT INTELLIGENCE HUD (6 Columns on Desktop) -->
-<div class="xl:col-span-6 flex flex-col space-y-4">
-<!-- Multimodal Photo Weather Intelligence Card -->
-<section class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-3 relative overflow-hidden">
-<div class="flex items-start justify-between">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 flex items-center justify-center">
-<span class="material-symbols-outlined text-[24px]">photo_camera</span>
+</div>
+</div>
+</div>
+<!-- RIGHT 4 COLUMNS: MULTIMODAL PHOTO WEATHER & METEOROLOGICAL RISK GAUGE -->
+<div class="xl:col-span-4 flex flex-col gap-6">
+<!-- 5. PHOTO WEATHER INTELLIGENCE (LENS COPILOT DROPZONE) with Shimmer Glow Wrapper -->
+<div class="glow-border-wrapper">
+<div class="relative bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 rounded-3xl p-6 text-white border border-slate-800 shadow-xl shadow-slate-950/20 overflow-hidden flex flex-col gap-4 z-10">
+<!-- Glow Accents -->
+<div class="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center ring-1 ring-emerald-500/30">
+<span class="material-symbols-outlined text-[20px]">camera_enhance</span>
 </div>
 <div>
-<span class="font-mono text-[10px] text-sky-700 uppercase font-bold tracking-widest">Multimodal Copilot</span>
-<h3 class="text-sm text-slate-900 font-bold">Photo Weather Intelligence</h3>
+<h3 class="font-display font-bold text-sm text-white">Photo Weather Intelligence</h3>
+<span class="font-mono text-[10px] font-bold text-emerald-400 tracking-wider uppercase">Multimodal Copilot</span>
 </div>
 </div>
-<span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-mono text-[10px] font-bold border border-sky-200">V-AI 4.2</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">v3.2</span>
 </div>
-<p class="text-xs text-slate-600 leading-relaxed">
-                Upload or snap a sky view. WeatherGPT's vision model segments cloud genus, optical barometry, and fog dissipation in real time.
+<p class="text-xs text-slate-300 leading-relaxed">
+                Snap or drag-and-drop a sky view. WeatherGPT vision classifies cloud altitude, optical moisture &amp; barometric trends instantly.
               </p>
-<!-- Dropzone Box with Soft Sky-Blue Tint and Dashed Border -->
-<div class="w-full p-6 rounded-xl bg-sky-50/60 border-2 border-dashed border-sky-300 hover:bg-sky-50 transition-all flex flex-col items-center justify-center text-center cursor-pointer group shadow-xs">
-<div class="w-12 h-12 rounded-full bg-white text-sky-600 border border-sky-200 flex items-center justify-center group-hover:scale-105 transition-transform mb-2 shadow-xs">
-<span class="material-symbols-outlined text-[26px]">add_a_photo</span>
+<!-- Futuristic Lens Dropzone with hover animations -->
+<div class="relative w-full h-40 rounded-2xl border-2 border-dashed border-slate-700/80 hover:border-emerald-400 bg-slate-900/60 group cursor-pointer transition-all duration-300 flex flex-col items-center justify-center p-4 overflow-hidden shadow-inner">
+<!-- Subtle Reticle Graphic -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
+<div class="w-28 h-28 rounded-full border border-dashed border-emerald-400 animate-spin" style="animation-duration: 20s;"></div>
 </div>
-<span class="text-xs font-semibold text-slate-800">Drop cloudscape photo here</span>
-<span class="font-mono text-[10px] text-slate-400 mt-0.5">Supports JPG, PNG, HEIC (Max 25MB)</span>
+<div class="relative z-10 flex flex-col items-center gap-2 text-center">
+<div class="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+<span class="material-symbols-outlined text-[24px]">add_a_photo</span>
 </div>
-<!-- Capability Tags Strip -->
-<div class="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
-<span class="px-2 py-1 rounded bg-slate-100 text-sky-700 font-semibold flex items-center gap-1 border border-slate-200">
-<span class="w-1.5 h-1.5 rounded-full bg-sky-600"></span>
-                  Multimodal Vision AI
+<div>
+<span class="text-xs font-bold text-white block group-hover:text-emerald-300 transition-colors">Drop Sky Snapshot Here</span>
+<span class="font-mono text-[10px] text-slate-400">JPG, PNG, HEIC up to 25MB</span>
+</div>
+</div>
+</div>
+<!-- Feature Pills -->
+<div class="flex flex-wrap items-center gap-1.5 pt-1">
+<span class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-emerald-300 flex items-center gap-1 transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Vision AI 3.5
                 </span>
-<span class="px-2 py-1 rounded bg-slate-100 text-emerald-700 font-semibold flex items-center gap-1 border border-slate-200">
-<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                  Live API Correlation
+<span class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-sky-300 flex items-center gap-1 transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> Live Radar Sync
                 </span>
-<span class="px-2 py-1 rounded bg-slate-100 text-amber-700 font-semibold flex items-center gap-1 border border-slate-200">
-<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-                  Risk Engine
+<span class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-mono text-amber-300 flex items-center gap-1 transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Risk Engine
                 </span>
 </div>
-<!-- CTA Action -->
-<button class="w-full py-2.5 px-4 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-98">
-<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+<!-- Action Button with ripple/hover shine -->
+<button class="relative overflow-hidden w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all group">
+<span class="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">photo_camera</span>
 <span>Analyze a Photo</span>
-<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
 </button>
-</section>
-<!-- Operational Safety Index / AI Meteorological Risk Score -->
-<section class="p-5 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col space-y-3.5">
+</div>
+</div>
+<!-- 6. AI METEOROLOGICAL RISK SCORE GAUGE CARD with Shimmer Border Glow -->
+<div class="glow-border-wrapper">
+<div class="relative bg-white rounded-3xl p-6 lg:p-7 border border-slate-200/90 shadow-card-smooth flex flex-col gap-5 z-10">
 <div class="flex items-center justify-between">
 <div>
-<span class="font-mono text-[10px] text-slate-400 uppercase font-bold tracking-wider">Operational Safety Index</span>
-<h3 class="text-sm text-slate-900 font-bold">AI Meteorological Risk Score</h3>
+<span class="font-mono text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Operational Safety Index</span>
+<h3 class="font-display font-bold text-base text-slate-900">AI Meteorological Risk Score</h3>
 </div>
-<span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 font-mono text-[10px] font-bold border border-amber-200">
-                  Moderate Risk
-                </span>
+<span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-mono text-xs font-bold border border-emerald-200 uppercase tracking-wider flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+  Low Risk
+</span>
 </div>
-<!-- Gauge & Metric Breakdown Split -->
-<div class="flex items-center gap-5">
-<!-- Circular SVG Radial Gauge -->
-<div class="relative w-32 h-32 shrink-0 flex items-center justify-center">
-<svg class="w-full h-full transform -rotate-90" viewbox="0 0 100 100">
-<!-- Track in clean slate-200 -->
-<circle class="text-slate-200" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="8"></circle>
-<!-- Progress (42%) in Amber -->
-<circle class="text-amber-500" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="145.7" stroke-linecap="round" stroke-width="8"></circle>
+<!-- Radial Gauge Centerpiece -->
+<div class="flex flex-col items-center justify-center py-2">
+<div class="relative w-44 h-44 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 160 160">
+<!-- Gauge Track background -->
+<circle cx="80" cy="80" fill="transparent" r="66" stroke="#E2E8F0" stroke-width="12"></circle>
+<!-- Active Value Arc with Entrance Animation -->
+<circle class="gauge-progress-circle drop-shadow-sm" cx="80" cy="80" fill="transparent" id="risk-gauge-circle" r="66" stroke="#059669" stroke-linecap="round" stroke-width="12"></circle>
 </svg>
-<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-<span class="text-3xl font-mono text-slate-900 font-extrabold">42</span>
-<span class="text-[9px] text-slate-400 font-mono font-bold">/ 100 INDEX</span>
-</div>
-</div>
-<!-- Risk Weight Contributions -->
-<div class="flex-1 flex flex-col space-y-2">
-<div class="flex items-center justify-between font-mono text-xs">
-<div class="flex items-center gap-1.5 text-slate-800 font-medium">
-<span class="material-symbols-outlined text-[16px] text-sky-600">rainy</span>
-<span>Precipitation Rate</span>
-</div>
-<span class="text-amber-700 font-bold">+19 (65%)</span>
-</div>
-<div class="flex items-center justify-between font-mono text-xs">
-<div class="flex items-center gap-1.5 text-slate-800 font-medium">
-<span class="material-symbols-outlined text-[16px] text-emerald-600">air</span>
-<span>Wind Gusts &amp; Shear</span>
-</div>
-<span class="text-emerald-700 font-bold">+13 (16 km/h)</span>
-</div>
-<div class="flex items-center justify-between font-mono text-xs">
-<div class="flex items-center gap-1.5 text-slate-800 font-medium">
-<span class="material-symbols-outlined text-[16px] text-sky-600">water_drop</span>
-<span>Atmospheric Humidity</span>
-</div>
-<span class="text-amber-700 font-bold">+11 (82%)</span>
+<!-- Dial Center Text -->
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+<span class="font-display font-extrabold text-4xl text-slate-900 tracking-tight leading-none" id="risk-metric-val">42</span>
+<span class="font-mono text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">/ 100</span>
+<span class="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1.5 border border-emerald-200/60 shadow-2xs">
+                      MODERATE INDEX
+                    </span>
 </div>
 </div>
 </div>
-<!-- Official Compliance Micro-Disclaimer -->
-<p class="text-[11px] text-slate-500 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-                * This score is an AI-assisted meteorological risk model. For legal alerts, navigation orders, and civic advisories, refer exclusively to IMD / MoES official bulletins.
+<!-- Detailed Risk Component Bars -->
+<div class="flex flex-col gap-2.5">
+<!-- Bar 1: Precip -->
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-600 flex items-center gap-1.5 font-medium">
+<span class="material-symbols-outlined text-emerald-600 text-[16px]">rainy</span>
+                      Precipitation Rate
+                    </span>
+<span class="font-mono font-bold text-slate-800">+18 (Light)</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+<div class="animated-bar h-full bg-emerald-500 rounded-full" data-width="35%" style="width: 0%;"></div>
+</div>
+</div>
+<!-- Bar 2: Wind Gusts -->
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-600 flex items-center gap-1.5 font-medium">
+<span class="material-symbols-outlined text-amber-500 text-[16px]">air</span>
+                      Wind Gusts &amp; Shear
+                    </span>
+<span class="font-mono font-bold text-slate-800">+14 (Mild)</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+<div class="animated-bar h-full bg-amber-500 rounded-full" data-width="28%" style="width: 0%;"></div>
+</div>
+</div>
+<!-- Bar 3: Humidity -->
+<div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex flex-col gap-1.5 hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-xs">
+<span class="text-slate-600 flex items-center gap-1.5 font-medium">
+<span class="material-symbols-outlined text-sky-500 text-[16px]">water_drop</span>
+                      Atmospheric Moisture
+                    </span>
+<span class="font-mono font-bold text-slate-800">+10 (78%)</span>
+</div>
+<div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+<div class="animated-bar h-full bg-sky-500 rounded-full" data-width="20%" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+<!-- Legal / MoES Compliance Disclaimer -->
+<p class="font-mono text-[10px] text-slate-400 leading-relaxed italic border-t border-slate-100 pt-3">
+                * This score is an experimental AI synoptic risk engine. Official navigation orders, port alerts, and red warnings originate strictly from IMD / MoES bulletins.
               </p>
-</section>
-<!-- Synoptic Reasoning Copilot Interactive Query Bar -->
-<section class="p-4 rounded-xl bg-white border border-slate-200 shadow-sm flex flex-col gap-2.5">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-sky-600 text-[20px]">smart_toy</span>
-<span class="text-sm text-slate-900 font-bold">Ask WeatherGPT</span>
 </div>
-<span class="font-mono text-[10px] text-emerald-700 font-bold">SYNOPTIC REASONING READY</span>
 </div>
-<div class="relative flex items-center">
-<input class="w-full bg-slate-50 text-slate-900 placeholder:text-slate-400 text-xs pl-3.5 pr-10 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white transition-all shadow-inner" placeholder="e.g. Will rainfall in Niphad affect table grapes today?" type="text"/>
-<button class="absolute right-1.5 w-7 h-7 rounded-md bg-sky-600 hover:bg-sky-700 text-white flex items-center justify-center transition-colors shadow-sm" type="button">
-<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+<!-- QUICK CHAT LAUNCHER WIDGET -->
+<div class="bg-gradient-to-r from-emerald-800 to-slate-900 rounded-2xl p-4 text-white flex items-center justify-between gap-3 shadow-md hover:shadow-lg transition-all">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shadow-md shadow-emerald-500/25">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+</div>
+<div>
+<span class="font-display font-bold text-sm block">Ask WeatherGPT</span>
+<span class="font-mono text-[11px] text-emerald-300">Synoptic reasoning ready</span>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-slate-900 font-bold text-xs flex items-center gap-1 hover:scale-105 active:scale-95 transition-all shadow-sm">
+<span>Query</span>
+<span class="material-symbols-outlined text-[15px]">arrow_forward</span>
 </button>
 </div>
-<!-- Quick Prompts Strip -->
-<div class="flex flex-wrap items-center gap-1.5 pt-0.5">
-<button class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-mono text-[10px] font-medium border border-slate-200 transition-colors">
-                  Hourly rain Nashik road
-                </button>
-<button class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-mono text-[10px] font-medium border border-slate-200 transition-colors">
-                  Grape vineyard spray window
-                </button>
-<button class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 font-mono text-[10px] font-medium border border-slate-200 transition-colors">
-                  Fog &amp; visibility OZAR airport
-                </button>
-</div>
-</section>
 </div>
 </div>
-<!-- Floating Synoptic Assistant Indicator Button (Fixed Bottom-Right Corner) -->
-<aside aria-label="Synoptic Copilot Chat Trigger" class="fixed bottom-6 right-6 z-50">
-<button class="w-14 h-14 rounded-full bg-sky-600 text-white shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-all">
-<span class="material-symbols-outlined text-[28px]">chat</span>
-</button>
-</aside>
 </div>
-<script>
-        // Dynamic live time update micro-interaction
-        function updateTelemetryHeartbeat() {
-          const el = document.querySelector('[data-heartbeat]');
-          if (el) {
-            const date = new Date();
-            el.textContent = date.toLocaleTimeString('en-IN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' IST';
-          }
-        }
-        setInterval(updateTelemetryHeartbeat, 1000);
-      </script>
 </main>
 </div>
+<!-- FLOATING GLOBAL COPILOT BUTTON -->
+<div class="fixed bottom-6 right-6 z-50">
+<button class="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white flex items-center justify-center shadow-xl shadow-emerald-600/30 transition-all hover:scale-110 active:scale-95 group" title="Launch WeatherGPT Intelligent Copilot">
+<span class="material-symbols-outlined text-[26px] group-hover:rotate-12 transition-transform">chat_bubble</span>
+<span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+</span>
+</button>
+</div>
+<script>
+    // Gauge ring & progress bars entrance animation on window load
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const gauge = document.getElementById('risk-gauge-circle');
+        if (gauge) {
+          // 414.69 - (414.69 * 0.42) = ~240.5
+          gauge.style.strokeDashoffset = "240.5";
+        }
+        document.querySelectorAll('.animated-bar').forEach(bar => {
+          const targetWidth = bar.getAttribute('data-width');
+          if (targetWidth) {
+            bar.style.width = targetWidth;
+          }
+        });
+      }, 250);
+    });
+
+    // Hub pill selection micro-interaction
+    document.querySelectorAll('.hub-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('.hub-pill').forEach(p => {
+          p.classList.remove('bg-emerald-600', 'text-white', 'shadow-md', 'shadow-emerald-600/25', 'ring-1', 'ring-emerald-500');
+          p.classList.add('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+        });
+        pill.classList.remove('bg-white', 'text-slate-700', 'border', 'border-slate-200');
+        pill.classList.add('bg-emerald-600', 'text-white', 'shadow-md', 'shadow-emerald-600/25', 'ring-1', 'ring-emerald-500');
+      });
+    });
+
+    // Operational Mode Tab Switcher with content transitions
+    const sectorData = {
+      kisan: {
+        title: "Sector Advisory: Field Operations Optimal",
+        text: "Pleasant outdoor conditions across Pune rural & peri-urban blocks. Evapotranspiration index steady at 3.8 mm/day. Favorable window for foliar fertilizer spraying and scheduled micro-irrigation until 18:00 IST. Evening precipitation risk is minimal (35%)."
+      },
+      aviation: {
+        title: "Sector Advisory: Terminal Aerodrome Forecast Steady",
+        text: "Ceiling and visibility OK (CAVOK) at Pune International (VAPO). Low-level wind shear index below cautionary thresholds. Crosswind component 08 knots from WSW. Optimal approach patterns expected across Western sectors."
+      },
+      city: {
+        title: "Sector Advisory: Urban Drainage & Transit Steady",
+        text: "Smart stormwater runoff stations report normal sump metrics. Heat stress comfort index at Level 1 (Comfortable). Metro power grids and traffic signal vectors unaffected by current micro-climate variations."
+      }
+    };
+
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mode-btn').forEach(b => {
+          b.classList.remove('bg-white', 'text-emerald-700', 'font-bold', 'shadow-sm');
+          b.classList.add('text-slate-600');
+        });
+        btn.classList.add('bg-white', 'text-emerald-700', 'font-bold', 'shadow-sm');
+        btn.classList.remove('text-slate-600');
+
+        const mode = btn.getAttribute('data-mode');
+        const advisory = sectorData[mode];
+        if (advisory) {
+          const titleEl = document.getElementById('sector-advisory-title');
+          const textEl = document.getElementById('sector-advisory-text');
+          if (titleEl && textEl) {
+            titleEl.style.opacity = '0';
+            textEl.style.opacity = '0';
+            setTimeout(() => {
+              titleEl.textContent = advisory.title;
+              textEl.textContent = advisory.text;
+              titleEl.style.opacity = '1';
+              textEl.style.opacity = '1';
+            }, 150);
+          }
+        }
+      });
+    });
+
+    // Forecast Day Selector interactive transitions
+    document.querySelectorAll('.forecast-day-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.forecast-day-card').forEach(c => {
+          c.classList.remove('bg-slate-900', 'text-white', 'shadow-md', 'ring-2', 'ring-emerald-400');
+          c.classList.add('bg-slate-50', 'text-slate-800', 'border', 'border-slate-200/80');
+        });
+        card.classList.remove('bg-slate-50', 'text-slate-800', 'border', 'border-slate-200/80');
+        card.classList.add('bg-slate-900', 'text-white', 'shadow-md', 'ring-2', 'ring-emerald-400');
+
+        const day = card.getAttribute('data-day');
+        const temp = card.getAttribute('data-temp');
+        const risk = card.getAttribute('data-risk');
+        const label = document.getElementById('forecast-frame-label');
+        if (label && day && temp && risk) {
+          label.textContent = `${day} (${temp} / ${risk})`;
+        }
+      });
+    });
+  </script>
 </body></html>
