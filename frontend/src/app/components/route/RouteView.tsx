@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Navigation,
   ArrowRightLeft,
@@ -16,6 +17,17 @@ import {
 import { api } from '../../lib/api';
 import { RouteAnalysisData } from '../../lib/types';
 import { formatTemperature, SupportedLanguage, t } from '../../i18n';
+
+// Dynamically import RouteMap with SSR disabled (Leaflet requires browser window)
+const RouteMap = dynamic(() => import('./RouteMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-80 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-xs font-mono text-slate-400">
+      <RefreshCw className="h-5 w-5 animate-spin mr-2 text-emerald-400" />
+      Loading Leaflet Corridor GIS Map...
+    </div>
+  ),
+});
 
 interface RouteViewProps {
   initialFrom?: string;
@@ -225,6 +237,14 @@ export const RouteView: React.FC<RouteViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* Interactive Leaflet Route Map */}
+          <RouteMap
+            timeline={routeData.timeline}
+            fromLocation={routeData.from_location}
+            toLocation={routeData.to_location}
+            highestRiskColor={routeData.highest_risk_color}
+          />
 
           {/* Waypoint Timeline */}
           <div className="p-space-md rounded-xl bg-surface-container-lowest border border-surface-container-high shadow-sm flex flex-col gap-space-sm">

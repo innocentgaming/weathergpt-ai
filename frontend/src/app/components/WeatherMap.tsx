@@ -243,12 +243,15 @@ export default function WeatherMap({
             <span className="material-symbols-outlined text-[18px]">radar</span>
           </div>
           <div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
               IMD Synoptic GIS Radar & Telemetry Map
+              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                🍃 Leaflet GIS Engine
+              </span>
               {loading && <span className="text-[10px] text-emerald-400 font-mono animate-pulse">Syncing...</span>}
             </h2>
             <p className="text-[11px] text-slate-400 font-mono">
-              Live AWS observation nodes • Centered: <strong className="text-emerald-400">{activeLocation}</strong>
+              Live AWS observation nodes • Leaflet & OpenStreetMap • Centered: <strong className="text-emerald-400">{activeLocation}</strong>
             </p>
           </div>
         </div>
