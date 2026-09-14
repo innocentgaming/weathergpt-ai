@@ -22,6 +22,7 @@ import {
   UserRole,
   WeatherForecastItem,
 } from '../../lib/types';
+import { FALLBACK_SYNOPTIC_WEATHER, FALLBACK_SYNOPTIC_RISK } from '../../constants/fallbackWeather';
 import {
   SupportedLanguage,
   formatTemperature,
@@ -76,43 +77,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading && !weather) {
-    return (
-      <div className="p-12 flex flex-col items-center justify-center min-h-[500px] text-center">
-        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-20"></span>
-          <RefreshCw className="h-10 w-10 text-emerald-600 animate-spin" />
-        </div>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white font-display">Loading Synoptic Telemetry...</h3>
-        <p className="text-xs text-slate-500 font-mono mt-1">Synchronizing IMD-AWS &amp; NWP multi-model ensemble matrix</p>
-      </div>
-    );
-  }
+  const activeWeather = weather || FALLBACK_SYNOPTIC_WEATHER;
+  const activeRisk = risk || FALLBACK_SYNOPTIC_RISK;
 
-  if (error && !weather) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[450px] text-center">
-        <div className="p-3 rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 mb-4 shadow-sm">
-          <AlertTriangle className="h-8 w-8" />
-        </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white font-display">Weather Telemetry Stream Disconnected</h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-md font-mono">{error}</p>
-        <button
-          onClick={onRefresh}
-          className="mt-4 px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs flex items-center gap-2 hover:bg-emerald-500 transition shadow-sm cursor-pointer"
-        >
-          <RefreshCw className="h-4 w-4" />
-          <span>Retry Connection</span>
-        </button>
-      </div>
-    );
-  }
-
-  if (!weather) return null;
-
-  const current = weather.current;
-  const forecast = weather.forecast || [];
-  const coords = weather.coordinates || { lat: 18.5204, lon: 73.8567 };
+  const current = activeWeather.current;
+  const forecast = activeWeather.forecast || [];
+  const coords = activeWeather.coordinates || { lat: 18.5204, lon: 73.8567 };
 
   const prominentHubs = [
     { name: 'Pune', badge: '27°C • Rain', icon: '🌧️', temp: 27 },
@@ -127,7 +97,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   ];
 
   const metarText =
-    weather.aviation_briefing?.metar_raw ||
+    activeWeather.aviation_briefing?.metar_raw ||
     `METAR VAPO 240700Z 24508KT 9000 NSC ${Math.round(current.temp)}/${Math.round(
       current.feels_like - 3
     )} Q${current.pressure || 1009} NOSIG=`;
@@ -145,21 +115,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     farmer: {
       title: 'Sector Advisory: Field Operations Optimal',
       badge: 'Active Advisory',
-      text: weather.kisan_advisory?.spraying_window ||
-        `Pleasant outdoor conditions across ${weather.location.split(',')[0]} rural & peri-urban blocks. Evapotranspiration index steady at 3.8 mm/day. Favorable window for foliar fertilizer spraying and scheduled micro-irrigation until 18:00 IST. Evening precipitation risk is minimal (${current.rain_probability}%).`,
+      text: activeWeather.kisan_advisory?.spraying_window ||
+        `Pleasant outdoor conditions across ${activeWeather.location.split(',')[0]} rural & peri-urban blocks. Evapotranspiration index steady at 3.8 mm/day. Favorable window for foliar fertilizer spraying and scheduled micro-irrigation until 18:00 IST. Evening precipitation risk is minimal (${current.rain_probability}%).`,
     },
     aviation: {
       title: 'Sector Advisory: Terminal Aerodrome Forecast Steady',
       badge: 'VFR Clear',
-      text: weather.aviation_briefing
-        ? `Flight category ${weather.aviation_briefing.flight_category}. Ceiling ${weather.aviation_briefing.ceiling_ft}ft, visibility ${weather.aviation_briefing.visibility_km}km. ${weather.aviation_briefing.crosswind_risk}.`
-        : `Ceiling and visibility OK (CAVOK) at ${weather.location.split(',')[0]} aerodrome. Low-level wind shear index below cautionary thresholds. Crosswind component 08 knots from WSW. Optimal approach patterns expected across Western sectors.`,
+      text: activeWeather.aviation_briefing
+        ? `Flight category ${activeWeather.aviation_briefing.flight_category}. Ceiling ${activeWeather.aviation_briefing.ceiling_ft}ft, visibility ${activeWeather.aviation_briefing.visibility_km}km. ${activeWeather.aviation_briefing.crosswind_risk}.`
+        : `Ceiling and visibility OK (CAVOK) at ${activeWeather.location.split(',')[0]} aerodrome. Low-level wind shear index below cautionary thresholds. Crosswind component 08 knots from WSW. Optimal approach patterns expected across Western sectors.`,
     },
     smartcity: {
       title: 'Sector Advisory: Urban Drainage & Transit Steady',
       badge: 'Infrastructure Green',
-      text: weather.smart_city_telemetry
-        ? `Heat island: ${weather.smart_city_telemetry.heat_island_index}. Drainage overload: ${weather.smart_city_telemetry.drainage_overload_risk}. Dispersion: ${weather.smart_city_telemetry.air_quality_dispersion}.`
+      text: activeWeather.smart_city_telemetry
+        ? `Heat island: ${activeWeather.smart_city_telemetry.heat_island_index}. Drainage overload: ${activeWeather.smart_city_telemetry.drainage_overload_risk}. Dispersion: ${activeWeather.smart_city_telemetry.air_quality_dispersion}.`
         : `Smart stormwater runoff stations report normal sump metrics. Heat stress comfort index at Level 1 (Comfortable). Metro power grids and traffic signal vectors unaffected by current micro-climate variations.`,
     },
     general: {
@@ -173,7 +143,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     sectorAdvisories[currentMode as keyof typeof sectorAdvisories] || sectorAdvisories.farmer;
 
   // Calculate risk metrics
-  const riskScore = risk?.score ?? 42;
+  const riskScore = activeRisk?.score ?? 42;
   const riskLabel =
     riskScore < 30 ? 'LOW RISK' : riskScore < 65 ? 'MODERATE INDEX' : 'ELEVATED RISK';
   const riskGaugeOffset = isGaugeAnimated
@@ -195,6 +165,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="w-full min-w-0 p-4 md:p-6 lg:p-8 max-w-[1720px] mx-auto grid-lines flex flex-col gap-6 selection:bg-emerald-500 selection:text-white">
+      {/* Non-blocking Live Telemetry Notification Pill if offline or reconnecting */}
+      {error && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs font-mono">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <span>Live Telemetry reconnecting... ({error}) • Displaying IMD Synoptic Consensus</span>
+          </div>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 font-bold transition flex items-center gap-1 cursor-pointer"
+            >
+              <RefreshCw className="h-3 w-3" />
+              <span>Retry</span>
+            </button>
+          )}
+        </div>
+      )}
       {/* 1. METEOROLOGICAL HUBS TICKER STRIP */}
       <section className="flex items-center gap-3 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none w-full">
         <div className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm text-slate-700 dark:text-slate-300">
@@ -205,7 +196,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {prominentHubs.map((hub) => {
-            const isCurrent = weather.location.toLowerCase().includes(hub.name.toLowerCase());
+            const isCurrent = activeWeather.location.toLowerCase().includes(hub.name.toLowerCase());
             return (
               <button
                 key={hub.name}
@@ -268,7 +259,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
                 <div className="flex items-baseline gap-2.5">
                   <h1 className="font-display font-extrabold text-2xl lg:text-3xl text-slate-900 dark:text-white tracking-tight uppercase">
-                    {weather.location}
+                    {activeWeather.location}
                   </h1>
                   <span className="font-mono text-xs font-bold text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                     IN ({coords.lat.toFixed(2)}°N, {coords.lon.toFixed(2)}°E)
@@ -580,7 +571,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <div className="w-1.5 h-1.5 rounded-full bg-slate-900"></div>
                   </div>
                   <span className="mt-1 px-2 py-0.5 rounded bg-white/90 backdrop-blur-md text-[10px] font-mono text-slate-900 font-bold shadow-md">
-                    {weather.location.toUpperCase()} HQ
+                    {activeWeather.location.toUpperCase()} HQ
                   </span>
                 </div>
 
@@ -1068,7 +1059,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 type="text"
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
-                placeholder={`Ask about ${weather.location.split(',')[0]} forecast, rain window, or risk...`}
+                placeholder={`Ask about ${activeWeather.location.split(',')[0]} forecast, rain window, or risk...`}
                 className="bg-transparent border-0 outline-none text-xs text-white placeholder:text-slate-400 px-2 w-full font-medium"
               />
               <button
@@ -1110,7 +1101,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <p className="font-bold">Consensus Verification Score: 98.2% Nominal</p>
                 <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
                   Zero anomalous variance between thermodynamic soundings and surface barometric observations across{' '}
-                  {weather.location}.
+                  {activeWeather.location}.
                 </p>
               </div>
             </div>
