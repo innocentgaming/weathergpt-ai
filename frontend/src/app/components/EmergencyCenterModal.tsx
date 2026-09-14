@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { PhoneCall, Shield, Building2, MapPin, CheckSquare, X, HeartHandshake } from 'lucide-react';
 import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { BACKEND_URL } from '../utils/apiUrl';
 
 interface EmergencyLocation {
   id: string;
@@ -21,8 +22,6 @@ interface EmergencyCenterModalProps {
   location?: string;
   lang?: SupportedLanguage;
 }
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function EmergencyCenterModal({ isOpen, onClose, location = "Nashik", lang = 'en' }: EmergencyCenterModalProps) {
   const [activeTab, setActiveTab] = useState<'shelters' | 'checklist' | 'contacts'>('shelters');

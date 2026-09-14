@@ -18,6 +18,7 @@ import {
 import { setAuthToken, setStoredUser, setStoredRole } from '../lib/auth';
 import { UserProfile, UserRole } from '../lib/types';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { BACKEND_URL } from '../utils/apiUrl';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,7 +37,6 @@ export default function LoginPage() {
   const [successMsg, setSuccessMsg] = useState('');
 
   const t = LOCALIZATION[lang] || LOCALIZATION.en;
-  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const handleLanguageChange = (newLang: SupportedLanguage) => {
     setLang(newLang);

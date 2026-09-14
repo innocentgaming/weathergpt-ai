@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, BarChart3, X, CloudRain, Thermometer, Sparkles } from 'lucide-react';
 import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { BACKEND_URL } from '../utils/apiUrl';
 
 interface MonthlyAvg {
   month: string;
@@ -36,8 +37,6 @@ interface ClimateInsightsModalProps {
   location?: string;
   lang?: SupportedLanguage;
 }
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function ClimateInsightsModal({ isOpen, onClose, location = "Nashik", lang = 'en' }: ClimateInsightsModalProps) {
   const [data, setData] = useState<ClimateData | null>(null);

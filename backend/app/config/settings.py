@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # ── CORS ──────────────────────────────────────────────────────────────────
     # Comma-separated list of allowed frontend origins.
     # Defaults to localhost dev origins; override in production .env.
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://weathergpt-frontend-hsh3.onrender.com,https://weathergpt-frontend.onrender.com,https://weathergpt-ai-alpha.vercel.app,https://weathergpt.vercel.app,http://localhost:8000"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://weathergpt-ai-lemon.vercel.app,https://weathergpt-frontend-hsh3.onrender.com,https://weathergpt-frontend.onrender.com,https://weathergpt-ai-alpha.vercel.app,https://weathergpt.vercel.app,http://localhost:8000"
 
     # ── Caching / Redis ───────────────────────────────────────────────────────
     # Optional Redis URL. If not set, falls back to in-memory TTL cache.

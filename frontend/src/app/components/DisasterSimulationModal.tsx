@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Sliders, X, ShieldAlert, Sparkles } from 'lucide-react';
 import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { BACKEND_URL } from '../utils/apiUrl';
 
 interface ScenarioResult {
   title: string;
@@ -21,8 +22,6 @@ interface DisasterSimulationModalProps {
   onApplyScenario?: (scenarioName: string) => void;
   lang?: SupportedLanguage;
 }
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function DisasterSimulationModal({
   isOpen,

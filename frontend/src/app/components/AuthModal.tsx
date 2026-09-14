@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { LOCALIZATION, SupportedLanguage } from '../i18n';
 import { setAuthToken } from '../lib/auth';
+import { BACKEND_URL } from '../utils/apiUrl';
 
 export interface UserProfile {
   id?: number;
@@ -46,7 +47,6 @@ export default function AuthModal({
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   const t = LOCALIZATION[lang as SupportedLanguage];
 
   if (!isOpen) return null;

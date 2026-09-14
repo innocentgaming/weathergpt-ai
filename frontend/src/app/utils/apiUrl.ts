@@ -24,16 +24,12 @@ export function getBackendUrl(): string {
 
     // If on render.com
     if (host.includes(".onrender.com")) {
-      // Direct live pairing for WeatherGPT Render services
-      if (host.includes("weathergpt-frontend-hsh3") || host.includes("weathergpt-frontend")) {
-        return "https://weathergpt-backend-qoct.onrender.com";
-      }
-      return "https://weathergpt-backend-qoct.onrender.com";
+      return "https://weathergpt-backend-hvop.onrender.com";
     }
 
     // If on Vercel
     if (host.includes("vercel.app")) {
-      return "https://weathergpt-backend-qoct.onrender.com";
+      return "https://weathergpt-backend-hvop.onrender.com";
     }
 
     // If running locally in browser
@@ -46,7 +42,7 @@ export function getBackendUrl(): string {
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  return process.env.NEXT_PUBLIC_API_URL || "https://weathergpt-backend-qoct.onrender.com";
+  return process.env.NEXT_PUBLIC_API_URL || "https://weathergpt-backend-hvop.onrender.com";
 }
 
 export const BACKEND_URL = getBackendUrl();
