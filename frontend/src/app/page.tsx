@@ -469,14 +469,17 @@ export default function WeatherGPTApp() {
           )}
 
           {activeTab === 'map' && (
-            <div className="p-space-md lg:p-space-lg flex flex-col gap-space-md">
+            <div className="p-4 lg:p-6 w-full flex flex-col gap-4">
               <WeatherMap
-                activeLayer="temp"
                 searchCenter={[
                   weather?.coordinates?.lat || DEFAULT_LOCATION.lat,
                   weather?.coordinates?.lon || DEFAULT_LOCATION.lon,
                 ]}
                 activeLocation={weather?.location || DEFAULT_LOCATION.fullName}
+                onMarkerClick={(loc) => {
+                  setSearchLocation(loc);
+                  changeLocation(loc);
+                }}
               />
             </div>
           )}
