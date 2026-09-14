@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FileText, X, Download, FileSpreadsheet, FileCode, Sparkles, CheckCircle2 } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
+import { SupportedLanguage } from '@/i18n';
+import { getModalStrings } from '@/i18n/modalTranslations';
 import { WeatherData } from '../lib/types';
 import { api } from '../lib/api';
 
@@ -39,6 +40,9 @@ export default function ReportGeneratorModal({
 
   const strings = getModalStrings(lang);
 
+  // Friendly location label (if numeric coordinates like 18.5727, 73.9824, display city name from weatherData if available)
+  const displayLocation = weatherData?.location || (location.includes(',') ? `GPS (${location})` : location) || "Mumbai, Maharashtra";
+
   useEffect(() => {
     if (reportData && reportOutputRef.current) {
       reportOutputRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -51,21 +55,21 @@ export default function ReportGeneratorModal({
     setIsGenerating(true);
     try {
       const d = await api.post<ReportData>('/api/report/generate', {
-        location,
+        location: displayLocation,
         report_type: reportType,
       });
       setReportData({
-        title: d.title,
-        location: d.location,
-        generated_at: d.generated_at,
-        executive_summary: d.executive_summary,
-        actionable_recommendations: d.actionable_recommendations || d.recommendations || '',
+        title: d.title || `WeatherGPT ${reportType.toUpperCase()} Report`,
+        location: d.location || displayLocation,
+        generated_at: d.generated_at || new Date().toLocaleString(),
+        executive_summary: d.executive_summary || `Atmospheric analysis completed for ${displayLocation}.`,
+        actionable_recommendations: d.actionable_recommendations || d.recommendations || 'Maintain situational awareness.',
       });
     } catch (err) {
       console.warn("Generating local meteorological bulletin fallback:", err);
       
       const curr = weatherData?.current;
-      const locDisplay = location || weatherData?.location || "Mumbai, Maharashtra";
+      const locDisplay = displayLocation;
       const tempVal = curr?.temp ?? 27;
       const condVal = curr?.condition || "Moderate Rain";
       const rainProbVal = curr?.rain_probability ?? 75;
@@ -73,8 +77,8 @@ export default function ReportGeneratorModal({
       const riskCatVal = "SEVERE";
 
       let generatedTitle = `WeatherGPT ${reportType.toUpperCase()} Intelligence Report`;
-      let execSummary = `Location: ${locDisplay}. Current condition: ${tempVal}°C with ${condVal}. Precipitation probability stands at ${rainProbVal}%. Regional Atmospheric Risk Index: ${riskScoreVal}/100 (${riskCatVal}).`;
-      let recommendations = "Monitor localized alerts, maintain standard emergency precautions, and secure sensitive outdoor assets.";
+      let execSummary = `Location: ${locDisplay}. Current status: ${tempVal}°C with ${condVal}. Precipitation probability: ${rainProbVal}%. Regional Atmospheric Risk Index: ${riskScoreVal}/100 (${riskCatVal}).`;
+      let recommendations = "Monitor localized weather alerts, maintain emergency gear, and secure sensitive outdoor assets.";
 
       if (reportType === 'weekly') {
         generatedTitle = `WeatherGPT Weekly Agricultural & Meteorological Outlook`;
@@ -95,7 +99,7 @@ export default function ReportGeneratorModal({
           ? "आपातकालीन निर्देश: निचले इलाकों में जलभराव पर निरंतर निगरानी रखें। जलमग्न रास्तों पर यात्रा से बचें और आपदा नियंत्रण दल को सतर्क रखें।"
           : "आम जनता को सलाह दी जाती है कि वे वर्षा के समय यात्रा से बचें एवं आवश्यक सुरक्षा सावधानियां बरतें।";
       } else if (lang === 'mr') {
-        generatedTitle = `वेदरजीपीटी ${reportType === 'weekly' ? 'साप्ताहिक कृषी व हवामान' : reportType === 'disaster' ? 'आपत्कालीन स्थिती' : 'दैनिक हवामान'} गुप्तवार्ता अहवाल`;
+        generatedTitle = `वेदरजीपीटी ${reportType === 'weekly' ? 'साप्ताहिक कृषी व हवामान' : reportType === 'disaster' ? 'आपत्कालीन स्थिती' : 'दैनिक हवामान'} अहवाल`;
         execSummary = `ठिकाण: ${locDisplay}. सद्यस्थिती ${tempVal}°C, स्थिती: ${condVal}. पावसाची शक्यता ${rainProbVal}%. एकूण हवामान जोखीम गुण ${riskScoreVal}/100 (${riskCatVal}).`;
         recommendations = reportType === 'weekly'
           ? "कृषी सल्ला: जमिनीत योग्य ओलावा आहे. अतिवृष्टीच्या काळात औषध फवारणी टाळा आणि शेतातून पाण्याचा निचरा व्यवस्थित ठेवा."
@@ -152,14 +156,16 @@ export default function ReportGeneratorModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
-                  {strings.report_modal_title}
+                  {strings?.report_modal_title || "Meteorological Intelligence Dossier"}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  {strings.badge_exec_report}
+                  {strings?.badge_exec_report || "Executive Report"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.report_modal_sub} • {location}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {strings?.report_modal_sub || "Automated analytical briefing & operational advisories"} • {displayLocation}
+              </p>
             </div>
           </div>
           <button 
@@ -174,12 +180,14 @@ export default function ReportGeneratorModal({
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           <div>
-            <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2.5">{strings.report_type_label}</label>
+            <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2.5">
+              {strings?.report_type_label || "Select Report Scope"}
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { id: 'daily', label: strings.report_type_daily },
-                { id: 'weekly', label: strings.report_type_weekly },
-                { id: 'disaster', label: strings.report_type_disaster }
+                { id: 'daily', label: strings?.report_type_daily || "Daily Briefing" },
+                { id: 'weekly', label: strings?.report_type_weekly || "7-Day Outlook" },
+                { id: 'disaster', label: strings?.report_type_disaster || "Disaster Assessment" }
               ].map((tp) => (
                 <button
                   key={tp.id}
@@ -202,7 +210,9 @@ export default function ReportGeneratorModal({
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 active:scale-[0.99]"
           >
             <FileText className="h-4 w-4" />
-            {isGenerating ? strings.report_generating : strings.report_generate_btn}
+            {isGenerating 
+              ? (strings?.report_generating || "Synthesizing Meteorological Dossier...") 
+              : (strings?.report_generate_btn || "Generate Comprehensive Dossier")}
           </button>
 
           {reportData && (
@@ -218,18 +228,24 @@ export default function ReportGeneratorModal({
                 </div>
 
                 <div>
-                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{strings.report_summary}</h5>
+                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">
+                    {strings?.report_summary || "Executive Summary"}
+                  </h5>
                   <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">{reportData.executive_summary}</p>
                 </div>
 
                 <div>
-                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{strings.report_recommendations}</h5>
+                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">
+                    {strings?.report_recommendations || "Operational Recommendations"}
+                  </h5>
                   <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed font-semibold">{reportData.actionable_recommendations}</p>
                 </div>
               </div>
 
               <div>
-                <span className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2">{strings.report_export_as}</span>
+                <span className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2">
+                  {strings?.report_export_as || "Export Dossier As"}
+                </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleDownload('txt')}
@@ -264,7 +280,7 @@ export default function ReportGeneratorModal({
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {strings.close_btn}
+            {strings?.close_btn || "Close"}
           </button>
         </div>
       </div>

@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, BarChart3, X, CloudRain, Thermometer, Sparkles } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
+import { SupportedLanguage } from '@/i18n';
+import { getModalStrings } from '@/i18n/modalTranslations';
 import { BACKEND_URL } from '../utils/apiUrl';
 
 interface MonthlyAvg {
@@ -117,14 +118,16 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
-                  {strings.climate_modal_title}
+                  {strings?.climate_modal_title || "Decadal Climate Trend & Insights"}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  {strings.badge_climate_analytics}
+                  {strings?.badge_climate_analytics || "Climate Analytics"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.climate_modal_sub} • {location}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {strings?.climate_modal_sub || "Historical meteorological benchmarks & decadal shift"} • {location}
+              </p>
             </div>
           </div>
           <button 
@@ -144,7 +147,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 shadow-sm">
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                    {strings.climate_avg_temp}
+                    {strings?.climate_avg_temp || "Historical Avg Temp"}
                   </span>
                   <div className="flex items-center gap-2">
                     <Thermometer className="h-5 w-5 text-amber-500 dark:text-amber-400" />
@@ -154,7 +157,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
 
                 <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 shadow-sm">
                   <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
-                    {strings.climate_avg_rain}
+                    {strings?.climate_avg_rain || "Annual Rainfall"}
                   </span>
                   <div className="flex items-center gap-2">
                     <CloudRain className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
@@ -164,7 +167,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
 
                 <div className="p-4 rounded-xl border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20 shadow-sm">
                   <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-400 block mb-1">
-                    {strings.climate_anomaly_title}
+                    {strings?.climate_anomaly_title || "Decadal Climate Anomaly"}
                   </span>
                   <span className="text-xl font-black text-cyan-800 dark:text-cyan-300">
                     {data.anomalies.temp_anomaly_celsius} / {data.anomalies.rainfall_shift}
@@ -174,7 +177,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
 
               {/* Anomaly Callout */}
               <div className="p-4 rounded-xl border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20 text-xs text-cyan-900 dark:text-cyan-200 shadow-sm">
-                <span className="font-black text-cyan-700 dark:text-cyan-400 block mb-1">💡 {strings.climate_anomaly_title}:</span>
+                <span className="font-black text-cyan-700 dark:text-cyan-400 block mb-1">💡 {strings?.climate_anomaly_title || "Decadal Climate Anomaly"}:</span>
                 <p className="leading-relaxed font-semibold">{data.anomalies.summary}</p>
               </div>
 
@@ -182,7 +185,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
               <div>
                 <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-                  {strings.climate_monthly_avg}
+                  {strings?.climate_monthly_avg || "Monthly Climatology Normals"}
                 </h4>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {data.monthly_averages.map((m, idx) => (
@@ -208,7 +211,7 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {strings.close_btn}
+            {strings?.close_btn || "Close"}
           </button>
         </div>
       </div>

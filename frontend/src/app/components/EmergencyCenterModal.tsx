@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { PhoneCall, Shield, Building2, MapPin, CheckSquare, X, HeartHandshake } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
+import { SupportedLanguage } from '@/i18n';
+import { getModalStrings } from '@/i18n/modalTranslations';
 import { BACKEND_URL } from '../utils/apiUrl';
 
 interface EmergencyLocation {
@@ -160,14 +161,16 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
-                  {strings.em_modal_title}
+                  {strings?.em_modal_title || "Disaster Emergency Hub & Verified Shelters"}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1">
                   <HeartHandshake className="h-3 w-3" />
-                  {strings.badge_safety_dir}
+                  {strings?.badge_safety_dir || "Safety Directory"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.em_modal_sub}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {strings?.em_modal_sub || "Local relief infrastructure, verified helplines & protocols"}
+              </p>
             </div>
           </div>
           <button 
@@ -188,7 +191,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             }`}
           >
             <Building2 className="h-4 w-4" />
-            {strings.em_tab_shelters}
+            {strings?.em_tab_shelters || "Relief Shelters"}
           </button>
           <button
             onClick={() => setActiveTab('checklist')}
@@ -197,7 +200,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             }`}
           >
             <CheckSquare className="h-4 w-4" />
-            {strings.em_tab_checklist}
+            {strings?.em_tab_checklist || "Safety Checklist"}
           </button>
           <button
             onClick={() => setActiveTab('contacts')}
@@ -206,7 +209,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             }`}
           >
             <PhoneCall className="h-4 w-4" />
-            {strings.em_tab_contacts}
+            {strings?.em_tab_contacts || "Emergency Helplines"}
           </button>
         </div>
 
@@ -229,7 +232,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
                         {loc.address} ({loc.distance_km})
                       </p>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                        {strings.em_col_capacity}: <span className="font-bold text-slate-800 dark:text-slate-200">{loc.capacity}</span>
+                        {strings?.em_col_capacity || "Capacity"}: <span className="font-bold text-slate-800 dark:text-slate-200">{loc.capacity}</span>
                       </p>
                     </div>
                     <a
@@ -253,7 +256,9 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
               </div>
 
               <div>
-                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">{strings.em_checklist_before}</h5>
+                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">
+                  {strings?.em_checklist_before || "Before Hazard Strikes (Preparedness)"}
+                </h5>
                 <div className="space-y-2">
                   {checklist.before.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -265,7 +270,9 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
               </div>
 
               <div>
-                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">{strings.em_checklist_during}</h5>
+                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">
+                  {strings?.em_checklist_during || "During Hazard Active Phase"}
+                </h5>
                 <div className="space-y-2">
                   {checklist.during.map((item, idx) => (
                     <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -291,7 +298,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
                     className="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 transition border border-slate-300 dark:border-slate-700"
                   >
                     <PhoneCall className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                    {strings.em_call_now}
+                    {strings?.em_call_now || "Call Now"}
                   </a>
                 </div>
               ))}
@@ -305,7 +312,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {strings.close_btn}
+            {strings?.close_btn || "Close"}
           </button>
         </div>
       </div>

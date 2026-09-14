@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, Sliders, X, ShieldAlert, Sparkles } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
+import { SupportedLanguage } from '@/i18n';
+import { getModalStrings } from '@/i18n/modalTranslations';
 import { BACKEND_URL } from '../utils/apiUrl';
 
 interface ScenarioResult {
@@ -137,14 +138,16 @@ export default function DisasterSimulationModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
-                  {strings.sim_modal_title}
+                  {strings?.sim_modal_title || "Disaster Scenario Simulator"}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  {strings.badge_advanced_ai}
+                  {strings?.badge_advanced_ai || "Advanced AI"}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.sim_modal_sub}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {strings?.sim_modal_sub || "Real-Time Multi-Hazard Impact Engine"}
+              </p>
             </div>
           </div>
           <button 
@@ -165,7 +168,7 @@ export default function DisasterSimulationModal({
             }`}
           >
             <AlertTriangle className="h-4 w-4" />
-            {strings.sim_tab_preset}
+            {strings?.sim_tab_preset || "Preset Hazards"}
           </button>
           <button
             onClick={() => setActiveTab('whatif')}
@@ -174,7 +177,7 @@ export default function DisasterSimulationModal({
             }`}
           >
             <Sliders className="h-4 w-4" />
-            {strings.sim_tab_whatif}
+            {strings?.sim_tab_whatif || "What-If Parameters"}
           </button>
         </div>
 
@@ -182,14 +185,16 @@ export default function DisasterSimulationModal({
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
           {activeTab === 'preset' ? (
             <div>
-              <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-3">{strings.sim_select_scenario}</label>
+              <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-3">
+                {strings?.sim_select_scenario || "Select Hazard Simulation Scenario"}
+              </label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-5">
                 {[
-                  { id: 'HEAVY_RAIN', label: strings.sim_scenario_rain },
-                  { id: 'FLOOD', label: strings.sim_scenario_flood },
-                  { id: 'HEATWAVE', label: strings.sim_scenario_heatwave },
-                  { id: 'CYCLONE', label: strings.sim_scenario_cyclone },
-                  { id: 'THUNDERSTORM', label: strings.sim_scenario_thunder }
+                  { id: 'HEAVY_RAIN', label: strings?.sim_scenario_rain || "Heavy Rain" },
+                  { id: 'FLOOD', label: strings?.sim_scenario_flood || "Flash Flood" },
+                  { id: 'HEATWAVE', label: strings?.sim_scenario_heatwave || "Heatwave" },
+                  { id: 'CYCLONE', label: strings?.sim_scenario_cyclone || "Cyclone" },
+                  { id: 'THUNDERSTORM', label: strings?.sim_scenario_thunder || "Thunderstorm" }
                 ].map((s) => (
                   <button
                     key={s.id}
@@ -219,7 +224,9 @@ export default function DisasterSimulationModal({
                   </div>
 
                   <div>
-                    <h4 className="text-xs font-black text-slate-700 dark:text-slate-200 mb-2.5">{strings.sim_affected_zones}</h4>
+                    <h4 className="text-xs font-black text-slate-700 dark:text-slate-200 mb-2.5">
+                      {strings?.sim_affected_zones || "Projected Vulnerability Zones"}
+                    </h4>
                     <div className="space-y-2">
                       {simResult.affected_zones.map((zone, idx) => (
                         <div key={idx} className="flex items-center justify-between text-xs bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -232,7 +239,9 @@ export default function DisasterSimulationModal({
 
                   {/* AI Emergency Recommendation Box */}
                   <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-500/30 p-4 rounded-xl text-xs text-rose-900 dark:text-rose-200 shadow-sm">
-                    <span className="font-black text-rose-700 dark:text-rose-400 block mb-1 text-xs">{strings.sim_ai_rec}</span>
+                    <span className="font-black text-rose-700 dark:text-rose-400 block mb-1 text-xs">
+                      {strings?.sim_ai_rec || "Tactical AI Recommendation"}
+                    </span>
                     <p className="leading-relaxed font-semibold">{simResult.ai_recommendation}</p>
                   </div>
                 </div>
@@ -243,7 +252,7 @@ export default function DisasterSimulationModal({
               <div className="space-y-4 bg-slate-50 dark:bg-slate-950/60 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-inner">
                 <div>
                   <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                    <span>{strings.sim_rain_increase}</span>
+                    <span>{strings?.sim_rain_increase || "Precipitation Surge"}</span>
                     <span className="text-amber-600 dark:text-amber-400 font-black">+{rainDelta}%</span>
                   </div>
                   <input
@@ -258,7 +267,7 @@ export default function DisasterSimulationModal({
 
                 <div>
                   <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                    <span>{strings.sim_temp_shift}</span>
+                    <span>{strings?.sim_temp_shift || "Temperature Delta"}</span>
                     <span className="text-amber-600 dark:text-amber-400 font-black">+{tempDelta}°C</span>
                   </div>
                   <input
@@ -273,7 +282,7 @@ export default function DisasterSimulationModal({
 
                 <div>
                   <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
-                    <span>{strings.sim_wind_surge}</span>
+                    <span>{strings?.sim_wind_surge || "Wind Velocity Surge"}</span>
                     <span className="text-amber-600 dark:text-amber-400 font-black">+{windDelta} km/h</span>
                   </div>
                   <input
@@ -288,10 +297,12 @@ export default function DisasterSimulationModal({
               </div>
 
               <div className="rounded-xl border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 p-5 text-center shadow-sm">
-                <p className="text-xs text-amber-700 dark:text-amber-400 uppercase font-black tracking-wider mb-1">{strings.sim_hypo_risk}</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 uppercase font-black tracking-wider mb-1">
+                  {strings?.sim_hypo_risk || "Hypothetical Hazard Risk Score"}
+                </p>
                 <div className="text-4xl font-black text-amber-600 dark:text-amber-400 my-2">{calculatedWhatIfScore}/100</div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-                  {strings.sim_hypo_desc}
+                  {strings?.sim_hypo_desc || "Dynamic multi-hazard risk modeled on real-time soil saturation, elevation, drainage infrastructure, and wind shear."}
                 </p>
               </div>
             </div>
@@ -304,7 +315,7 @@ export default function DisasterSimulationModal({
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {strings.close_btn}
+            {strings?.close_btn || "Close"}
           </button>
         </div>
       </div>

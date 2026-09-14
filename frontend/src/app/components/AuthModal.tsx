@@ -7,7 +7,8 @@ import {
   Mail, Sparkles, AlertCircle, LogOut, ArrowRight, Wheat, Car, 
   Flame, GraduationCap 
 } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
+import { SupportedLanguage } from '@/i18n';
+import { getModalStrings } from '@/i18n/modalTranslations';
 import { setAuthToken } from '../lib/auth';
 import { BACKEND_URL } from '../utils/apiUrl';
 
@@ -332,7 +333,9 @@ export default function AuthModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-2">{strings.auth_select_persona}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-2">
+                    {strings?.auth_select_persona || "Select Operational Role"}
+                  </label>
                   <div className="grid grid-cols-2 gap-2">
                     {personaOptions.map((p) => {
                       const Icon = p.icon;
@@ -370,7 +373,9 @@ export default function AuthModal({
             {activeTab === 'login' && (
               <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_email_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                    {strings?.auth_email_label || "Email Address"}
+                  </label>
                   <div className="relative">
                     <Mail className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -378,14 +383,16 @@ export default function AuthModal({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={strings.auth_email_placeholder}
+                      placeholder={strings?.auth_email_placeholder || "your.name@domain.com"}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_password_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                    {strings?.auth_password_label || "Password"}
+                  </label>
                   <div className="relative">
                     <Lock className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -414,7 +421,9 @@ export default function AuthModal({
             {activeTab === 'register' && (
               <form onSubmit={handleRegisterSubmit} className="p-6 space-y-3.5">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_name_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                    {strings?.auth_name_label || "Full Name"}
+                  </label>
                   <div className="relative">
                     <User className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -422,14 +431,16 @@ export default function AuthModal({
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder={strings.auth_name_placeholder}
+                      placeholder={strings?.auth_name_placeholder || "E.g. Vikram Sharma"}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_email_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                    {strings?.auth_email_label || "Email Address"}
+                  </label>
                   <div className="relative">
                     <Mail className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -437,14 +448,16 @@ export default function AuthModal({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={strings.auth_email_placeholder}
+                      placeholder={strings?.auth_email_placeholder || "your.name@domain.com"}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_password_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">
+                    {strings?.auth_password_label || "Password"}
+                  </label>
                   <div className="relative">
                     <Lock className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -459,7 +472,9 @@ export default function AuthModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">{strings.auth_role_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5">
+                    {strings?.auth_role_label || "Operational Role Mode"}
+                  </label>
                   <div className="grid grid-cols-3 gap-1.5">
                     {personaOptions.map((p) => {
                       const Icon = p.icon;
