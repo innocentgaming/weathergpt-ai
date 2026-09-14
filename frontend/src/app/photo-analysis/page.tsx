@@ -265,18 +265,6 @@ export default function PhotoAnalysisPage() {
     setChatHistory([]);
   };
 
-  // Demo Scenarios for SIH Judges
-  const handleSelectDemoScenario = (scenarioFilename: string) => {
-    setErrorMsg(null);
-    // Create a mock image blob for demonstration
-    const fakeBlob = new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10])], { type: 'image/jpeg' });
-    const mockFile = new File([fakeBlob], scenarioFilename, { type: 'image/jpeg' });
-    setSelectedImage(mockFile);
-    setPreviewUrl('https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=800&q=80');
-    setAnalysisResult(null);
-    setChatHistory([]);
-  };
-
   // Execute Analysis
   const handleAnalyze = async () => {
     if (!selectedImage) {
@@ -540,32 +528,6 @@ export default function PhotoAnalysisPage() {
               )}
             </button>
           </div>
-
-          {/* Quick SIH Demo Scenarios */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4">
-            <h3 className="text-xs font-bold text-slate-300 mb-2.5 flex items-center gap-1.5">
-              <Compass className="h-3.5 w-3.5 text-amber-400" />
-              SIH Judging Demo Scenarios (Zero Key Required)
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: '🌧️ Heavy Rain & Wet Road', file: 'heavy_rain_ponding.jpg' },
-                { label: '⚡ Thunderstorm & Lightning', file: 'thunderstorm_squall.jpg' },
-                { label: '🌫️ Dense Ghat Fog', file: 'dense_ghat_fog.jpg' },
-                { label: '🌊 Road Inundation', file: 'flooded_expressway.jpg' },
-                { label: '☀️ Clear Blue Sky', file: 'sunny_clear_sky.jpg' }
-              ].map((s, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => handleSelectDemoScenario(s.file)}
-                  className="p-2 text-left bg-slate-950/60 hover:bg-slate-800/60 border border-slate-800 hover:border-slate-700 rounded-xl text-[11px] font-medium text-slate-300 transition truncate"
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Right Column: Analysis Intelligence Output */}
@@ -794,7 +756,7 @@ export default function PhotoAnalysisPage() {
               </div>
               <h3 className="text-sm font-bold text-slate-300">No Photo Analyzed Yet</h3>
               <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
-                Select or capture a photo on the left, or test with one of the pre-configured SIH demo scenarios to see multimodal visual weather analysis in real time.
+                Upload or capture a sky photo on the left to see multimodal visual weather analysis in real time.
               </p>
             </div>
           )}
