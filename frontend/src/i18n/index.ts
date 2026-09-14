@@ -18,19 +18,22 @@ import paCommon from './locales/pa/common.json';
 
 export * from './types';
 export * from './config';
+export * from './modalTranslations';
+
+import { getModalStrings } from './modalTranslations';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LOCALES: Record<SupportedLanguage, any> = {
-  en: enCommon,
-  hi: hiCommon,
-  mr: mrCommon,
-  ta: taCommon,
-  te: teCommon,
-  bn: bnCommon,
-  gu: guCommon,
-  kn: knCommon,
-  ml: mlCommon,
-  pa: paCommon,
+  en: { ...enCommon, ...getModalStrings('en') },
+  hi: { ...hiCommon, ...getModalStrings('hi') },
+  mr: { ...mrCommon, ...getModalStrings('mr') },
+  ta: { ...taCommon, ...getModalStrings('ta') },
+  te: { ...teCommon, ...getModalStrings('te') },
+  bn: { ...bnCommon, ...getModalStrings('bn') },
+  gu: { ...guCommon, ...getModalStrings('gu') },
+  kn: { ...knCommon, ...getModalStrings('kn') },
+  ml: { ...mlCommon, ...getModalStrings('ml') },
+  pa: { ...paCommon, ...getModalStrings('pa') },
 };
 
 // Backward-compatible dictionary export

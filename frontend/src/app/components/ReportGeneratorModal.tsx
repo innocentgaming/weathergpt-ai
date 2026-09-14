@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FileText, X, Download, FileSpreadsheet, FileCode, Sparkles, CheckCircle2 } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
 import { WeatherData } from '../lib/types';
 import { api } from '../lib/api';
 
@@ -37,7 +37,7 @@ export default function ReportGeneratorModal({
   
   const reportOutputRef = useRef<HTMLDivElement>(null);
 
-  const t = LOCALIZATION[lang] || LOCALIZATION.en;
+  const strings = getModalStrings(lang);
 
   useEffect(() => {
     if (reportData && reportOutputRef.current) {
@@ -152,14 +152,14 @@ export default function ReportGeneratorModal({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
-                  {t.report_modal_title}
+                  {strings.report_modal_title}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  {t.badge_exec_report}
+                  {strings.badge_exec_report}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.report_modal_sub} • {location}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.report_modal_sub} • {location}</p>
             </div>
           </div>
           <button 
@@ -174,12 +174,12 @@ export default function ReportGeneratorModal({
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-5 flex-1">
           <div>
-            <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2.5">{t.report_type_label}</label>
+            <label className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2.5">{strings.report_type_label}</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { id: 'daily', label: t.report_type_daily },
-                { id: 'weekly', label: t.report_type_weekly },
-                { id: 'disaster', label: t.report_type_disaster }
+                { id: 'daily', label: strings.report_type_daily },
+                { id: 'weekly', label: strings.report_type_weekly },
+                { id: 'disaster', label: strings.report_type_disaster }
               ].map((tp) => (
                 <button
                   key={tp.id}
@@ -202,7 +202,7 @@ export default function ReportGeneratorModal({
             className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs transition flex items-center justify-center gap-2 shadow-md cursor-pointer disabled:opacity-50 active:scale-[0.99]"
           >
             <FileText className="h-4 w-4" />
-            {isGenerating ? t.report_generating : t.report_generate_btn}
+            {isGenerating ? strings.report_generating : strings.report_generate_btn}
           </button>
 
           {reportData && (
@@ -218,18 +218,18 @@ export default function ReportGeneratorModal({
                 </div>
 
                 <div>
-                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{t.report_summary}</h5>
+                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{strings.report_summary}</h5>
                   <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium">{reportData.executive_summary}</p>
                 </div>
 
                 <div>
-                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{t.report_recommendations}</h5>
+                  <h5 className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider mb-1">{strings.report_recommendations}</h5>
                   <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed font-semibold">{reportData.actionable_recommendations}</p>
                 </div>
               </div>
 
               <div>
-                <span className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2">{t.report_export_as}</span>
+                <span className="text-xs font-black text-slate-700 dark:text-slate-200 block mb-2">{strings.report_export_as}</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleDownload('txt')}
@@ -264,7 +264,7 @@ export default function ReportGeneratorModal({
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {t.close_btn}
+            {strings.close_btn}
           </button>
         </div>
       </div>

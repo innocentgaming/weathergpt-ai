@@ -7,7 +7,7 @@ import {
   Mail, Sparkles, AlertCircle, LogOut, ArrowRight, Wheat, Car, 
   Flame, GraduationCap 
 } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
 import { setAuthToken } from '../lib/auth';
 import { BACKEND_URL } from '../utils/apiUrl';
 
@@ -47,7 +47,7 @@ export default function AuthModal({
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const t = LOCALIZATION[lang as SupportedLanguage];
+  const strings = getModalStrings(lang as SupportedLanguage);
 
   if (!isOpen) return null;
 
@@ -195,11 +195,11 @@ export default function AuthModal({
     icon: React.ComponentType<{ className?: string }>;
     label: string;
   }> = [
-    { id: 'general', icon: User, label: t.auth_persona_general },
-    { id: 'farmer', icon: Wheat, label: t.auth_persona_farmer },
-    { id: 'traveller', icon: Car, label: t.auth_persona_traveller },
-    { id: 'disaster', icon: Flame, label: t.auth_persona_disaster },
-    { id: 'school', icon: GraduationCap, label: t.auth_persona_school }
+    { id: 'general', icon: User, label: strings.auth_persona_general },
+    { id: 'farmer', icon: Wheat, label: strings.auth_persona_farmer },
+    { id: 'traveller', icon: Car, label: strings.auth_persona_traveller },
+    { id: 'disaster', icon: Flame, label: strings.auth_persona_disaster },
+    { id: 'school', icon: GraduationCap, label: strings.auth_persona_school }
   ];
 
   // Show profile card if user is signed in with a real account and not in the process of switching
@@ -332,7 +332,7 @@ export default function AuthModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-2">{t.auth_select_persona}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-2">{strings.auth_select_persona}</label>
                   <div className="grid grid-cols-2 gap-2">
                     {personaOptions.map((p) => {
                       const Icon = p.icon;
@@ -370,7 +370,7 @@ export default function AuthModal({
             {activeTab === 'login' && (
               <form onSubmit={handleLoginSubmit} className="p-6 space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{t.auth_email_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_email_label}</label>
                   <div className="relative">
                     <Mail className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -378,14 +378,14 @@ export default function AuthModal({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t.auth_email_placeholder}
+                      placeholder={strings.auth_email_placeholder}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{t.auth_password_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_password_label}</label>
                   <div className="relative">
                     <Lock className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -414,7 +414,7 @@ export default function AuthModal({
             {activeTab === 'register' && (
               <form onSubmit={handleRegisterSubmit} className="p-6 space-y-3.5">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{t.auth_name_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_name_label}</label>
                   <div className="relative">
                     <User className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -422,14 +422,14 @@ export default function AuthModal({
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder={t.auth_name_placeholder}
+                      placeholder={strings.auth_name_placeholder}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{t.auth_email_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_email_label}</label>
                   <div className="relative">
                     <Mail className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -437,14 +437,14 @@ export default function AuthModal({
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t.auth_email_placeholder}
+                      placeholder={strings.auth_email_placeholder}
                       className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">{t.auth_password_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1">{strings.auth_password_label}</label>
                   <div className="relative">
                     <Lock className="h-4 w-4 text-slate-500 absolute left-3.5 top-3" />
                     <input
@@ -459,7 +459,7 @@ export default function AuthModal({
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1.5">{t.auth_role_label}</label>
+                  <label className="text-xs font-bold text-slate-300 block mb-1.5">{strings.auth_role_label}</label>
                   <div className="grid grid-cols-3 gap-1.5">
                     {personaOptions.map((p) => {
                       const Icon = p.icon;

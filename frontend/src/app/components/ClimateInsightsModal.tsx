@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, BarChart3, X, CloudRain, Thermometer, Sparkles } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
 import { BACKEND_URL } from '../utils/apiUrl';
 
 interface MonthlyAvg {
@@ -40,7 +40,7 @@ interface ClimateInsightsModalProps {
 
 export default function ClimateInsightsModal({ isOpen, onClose, location = "Nashik", lang = 'en' }: ClimateInsightsModalProps) {
   const [data, setData] = useState<ClimateData | null>(null);
-  const t = LOCALIZATION[lang] || LOCALIZATION.en;
+  const strings = getModalStrings(lang);
 
   const translateMonthName = (m: string) => {
     const monthMapHi: Record<string, string> = {
@@ -107,29 +107,29 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
-      <div className="relative w-full max-w-3xl rounded-2xl border border-cyan-500/30 bg-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-3xl rounded-2xl border border-slate-300 dark:border-cyan-500/30 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-cyan-500/20 p-2.5 text-cyan-400 border border-cyan-500/30">
+            <div className="rounded-xl bg-cyan-500/10 dark:bg-cyan-500/20 p-2.5 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 dark:border-cyan-500/30">
               <TrendingUp className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-black text-lg text-slate-100">
-                  {t.climate_modal_title}
+                <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
+                  {strings.climate_modal_title}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  {t.badge_climate_analytics}
+                  {strings.badge_climate_analytics}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">{t.climate_modal_sub} • {location}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.climate_modal_sub} • {location}</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -142,54 +142,54 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
             <>
               {/* Baseline Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 shadow-sm">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
-                    {t.climate_avg_temp}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 shadow-sm">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+                    {strings.climate_avg_temp}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Thermometer className="h-5 w-5 text-amber-400" />
-                    <span className="text-xl font-black text-slate-100">{data.historical_avg_temp}°C</span>
+                    <Thermometer className="h-5 w-5 text-amber-500 dark:text-amber-400" />
+                    <span className="text-xl font-black text-slate-900 dark:text-slate-100">{data.historical_avg_temp}°C</span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 shadow-sm">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">
-                    {t.climate_avg_rain}
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 shadow-sm">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
+                    {strings.climate_avg_rain}
                   </span>
                   <div className="flex items-center gap-2">
-                    <CloudRain className="h-5 w-5 text-cyan-400" />
-                    <span className="text-xl font-black text-slate-100">{data.historical_avg_rainfall_mm} mm</span>
+                    <CloudRain className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                    <span className="text-xl font-black text-slate-900 dark:text-slate-100">{data.historical_avg_rainfall_mm} mm</span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/20 shadow-sm">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-400 block mb-1">
-                    {t.climate_anomaly_title}
+                <div className="p-4 rounded-xl border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20 shadow-sm">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700 dark:text-cyan-400 block mb-1">
+                    {strings.climate_anomaly_title}
                   </span>
-                  <span className="text-xl font-black text-cyan-300">
+                  <span className="text-xl font-black text-cyan-800 dark:text-cyan-300">
                     {data.anomalies.temp_anomaly_celsius} / {data.anomalies.rainfall_shift}
                   </span>
                 </div>
               </div>
 
               {/* Anomaly Callout */}
-              <div className="p-4 rounded-xl border border-cyan-500/30 bg-cyan-950/20 text-xs text-cyan-200 shadow-sm">
-                <span className="font-black text-cyan-400 block mb-1">💡 {t.climate_anomaly_title}:</span>
-                <p className="leading-relaxed font-medium">{data.anomalies.summary}</p>
+              <div className="p-4 rounded-xl border border-cyan-200 dark:border-cyan-500/30 bg-cyan-50 dark:bg-cyan-950/20 text-xs text-cyan-900 dark:text-cyan-200 shadow-sm">
+                <span className="font-black text-cyan-700 dark:text-cyan-400 block mb-1">💡 {strings.climate_anomaly_title}:</span>
+                <p className="leading-relaxed font-semibold">{data.anomalies.summary}</p>
               </div>
 
               {/* Monthly Climatology Grid */}
               <div>
-                <h4 className="text-xs font-black text-slate-200 mb-3 flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-cyan-400" />
-                  {t.climate_monthly_avg}
+                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
+                  {strings.climate_monthly_avg}
                 </h4>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {data.monthly_averages.map((m, idx) => (
-                    <div key={idx} className="p-3 rounded-xl border border-slate-800 bg-slate-950/60 text-center shadow-sm">
-                      <p className="text-xs font-black text-cyan-400">{translateMonthName(m.month)}</p>
-                      <p className="text-sm font-black text-slate-100 mt-1">{m.temp_c}°C</p>
-                      <p className="text-[10px] text-slate-400 font-bold mt-0.5">{m.rainfall_mm} mm</p>
+                    <div key={idx} className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-center shadow-sm">
+                      <p className="text-xs font-black text-cyan-700 dark:text-cyan-400">{translateMonthName(m.month)}</p>
+                      <p className="text-sm font-black text-slate-900 dark:text-slate-100 mt-1">{m.temp_c}°C</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">{m.rainfall_mm} mm</p>
                     </div>
                   ))}
                 </div>
@@ -203,12 +203,12 @@ export default function ClimateInsightsModal({ isOpen, onClose, location = "Nash
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 bg-slate-950/80 px-6 py-4 flex justify-end">
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {t.close_btn}
+            {strings.close_btn}
           </button>
         </div>
       </div>

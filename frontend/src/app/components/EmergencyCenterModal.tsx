@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PhoneCall, Shield, Building2, MapPin, CheckSquare, X, HeartHandshake } from 'lucide-react';
-import { LOCALIZATION, SupportedLanguage } from '../i18n';
+import { LOCALIZATION, SupportedLanguage, getModalStrings } from '../i18n';
 import { BACKEND_URL } from '../utils/apiUrl';
 
 interface EmergencyLocation {
@@ -28,7 +28,7 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
   const [locations, setLocations] = useState<EmergencyLocation[]>([]);
   const [hazard] = useState('flood');
 
-  const t = LOCALIZATION[lang] || LOCALIZATION.en;
+  const strings = getModalStrings(lang);
 
   const getLocalizedChecklist = (l: SupportedLanguage) => {
     if (l === 'hi') {
@@ -150,29 +150,29 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
-      <div className="relative w-full max-w-3xl rounded-2xl border border-emerald-500/30 bg-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-3xl rounded-2xl border border-slate-300 dark:border-emerald-500/30 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-emerald-500/20 p-2.5 text-emerald-400 border border-emerald-500/30">
+            <div className="rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 p-2.5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 dark:border-emerald-500/30">
               <Shield className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="font-black text-lg text-slate-100">
-                  {t.em_modal_title}
+                <h2 className="font-black text-lg text-slate-900 dark:text-slate-100">
+                  {strings.em_modal_title}
                 </h2>
-                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1">
                   <HeartHandshake className="h-3 w-3" />
-                  {t.badge_safety_dir}
+                  {strings.badge_safety_dir}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">{t.em_modal_sub}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{strings.em_modal_sub}</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+            className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition cursor-pointer"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -180,33 +180,33 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex border-b border-slate-800 bg-slate-900/50 px-6 pt-3 gap-6">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-900/50 px-6 pt-3 gap-6">
           <button
             onClick={() => setActiveTab('shelters')}
             className={`pb-3 text-xs font-black flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'shelters' ? 'border-emerald-500 text-emerald-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === 'shelters' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <Building2 className="h-4 w-4" />
-            {t.em_tab_shelters}
+            {strings.em_tab_shelters}
           </button>
           <button
             onClick={() => setActiveTab('checklist')}
             className={`pb-3 text-xs font-black flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'checklist' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === 'checklist' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <CheckSquare className="h-4 w-4" />
-            {t.em_tab_checklist}
+            {strings.em_tab_checklist}
           </button>
           <button
             onClick={() => setActiveTab('contacts')}
             className={`pb-3 text-xs font-black flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              activeTab === 'contacts' ? 'border-amber-500 text-amber-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === 'contacts' ? 'border-amber-500 text-amber-600 dark:text-amber-400' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             <PhoneCall className="h-4 w-4" />
-            {t.em_tab_contacts}
+            {strings.em_tab_contacts}
           </button>
         </div>
 
@@ -216,20 +216,20 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
             <div className="space-y-4">
               <div className="grid gap-3">
                 {locations.map((loc) => (
-                  <div key={loc.id} className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
+                  <div key={loc.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-100 text-sm">{loc.name}</h4>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-emerald-400 border border-slate-700">
+                        <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">{loc.name}</h4>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 border border-slate-300 dark:border-slate-700">
                           {loc.category}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-slate-500" />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-slate-400 dark:text-slate-500" />
                         {loc.address} ({loc.distance_km})
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5 font-medium">
-                        {t.em_col_capacity}: <span className="font-bold text-slate-200">{loc.capacity}</span>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
+                        {strings.em_col_capacity}: <span className="font-bold text-slate-800 dark:text-slate-200">{loc.capacity}</span>
                       </p>
                     </div>
                     <a
@@ -247,17 +247,17 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
 
           {activeTab === 'checklist' && (
             <div className="space-y-5">
-              <div className="p-4 rounded-xl border border-blue-500/30 bg-blue-950/20">
-                <h4 className="font-black text-blue-400 text-sm mb-1">{checklist.title}</h4>
-                <p className="text-xs text-slate-300">Hazard Focus: {hazard.toUpperCase()}</p>
+              <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-950/20">
+                <h4 className="font-black text-blue-700 dark:text-blue-400 text-sm mb-1">{checklist.title}</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300">Hazard Focus: {hazard.toUpperCase()}</p>
               </div>
 
               <div>
-                <h5 className="text-xs font-black text-slate-200 mb-2">{t.em_checklist_before}</h5>
+                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">{strings.em_checklist_before}</h5>
                 <div className="space-y-2">
                   {checklist.before.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200 bg-slate-950/40 p-3 rounded-lg border border-slate-800">
-                      <div className="h-4 w-4 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold mt-0.5">✓</div>
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                      <div className="h-4 w-4 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-[10px] font-bold mt-0.5">✓</div>
                       <span>{item}</span>
                     </div>
                   ))}
@@ -265,11 +265,11 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
               </div>
 
               <div>
-                <h5 className="text-xs font-black text-slate-200 mb-2">{t.em_checklist_during}</h5>
+                <h5 className="text-xs font-black text-slate-800 dark:text-slate-200 mb-2">{strings.em_checklist_during}</h5>
                 <div className="space-y-2">
                   {checklist.during.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-200 bg-slate-950/40 p-3 rounded-lg border border-slate-800">
-                      <div className="h-4 w-4 rounded bg-amber-500/20 text-amber-400 flex items-center justify-center text-[10px] font-bold mt-0.5">!</div>
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950/40 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                      <div className="h-4 w-4 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-[10px] font-bold mt-0.5">!</div>
                       <span>{item}</span>
                     </div>
                   ))}
@@ -281,17 +281,17 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
           {activeTab === 'contacts' && (
             <div className="space-y-3">
               {checklist.emergency_contacts.map((contact, idx) => (
-                <div key={idx} className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex justify-between items-center shadow-sm">
+                <div key={idx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex justify-between items-center shadow-sm">
                   <div>
-                    <h4 className="font-bold text-slate-200 text-xs">{contact.name}</h4>
-                    <p className="text-sm font-black text-amber-400 mt-0.5">{contact.number}</p>
+                    <h4 className="font-bold text-slate-900 dark:text-slate-200 text-xs">{contact.name}</h4>
+                    <p className="text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5">{contact.number}</p>
                   </div>
                   <a
                     href={`tel:${contact.number.split('/')[0].trim()}`}
-                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 flex items-center gap-1.5 transition border border-slate-700"
+                    className="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 transition border border-slate-300 dark:border-slate-700"
                   >
-                    <PhoneCall className="h-3.5 w-3.5 text-emerald-400" />
-                    {t.em_call_now}
+                    <PhoneCall className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    {strings.em_call_now}
                   </a>
                 </div>
               ))}
@@ -300,12 +300,12 @@ export default function EmergencyCenterModal({ isOpen, onClose, location = "Nash
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-800 bg-slate-950/80 px-6 py-4 flex justify-end">
+        <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 px-6 py-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-bold text-slate-800 dark:text-white transition cursor-pointer"
           >
-            {t.close_btn}
+            {strings.close_btn}
           </button>
         </div>
       </div>
