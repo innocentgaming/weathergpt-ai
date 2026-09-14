@@ -50,3 +50,17 @@ export function getBackendUrl(): string {
 }
 
 export const BACKEND_URL = getBackendUrl();
+
+export function getWsUrl(): string {
+  if (
+    process.env.NEXT_PUBLIC_WS_URL &&
+    !process.env.NEXT_PUBLIC_WS_URL.includes("localhost:8000") &&
+    process.env.NEXT_PUBLIC_WS_URL.startsWith("ws")
+  ) {
+    return process.env.NEXT_PUBLIC_WS_URL.replace(/\/+$/, "");
+  }
+  const httpUrl = getBackendUrl();
+  return httpUrl.replace(/^http/, "ws");
+}
+
+export const WS_URL = getWsUrl();
