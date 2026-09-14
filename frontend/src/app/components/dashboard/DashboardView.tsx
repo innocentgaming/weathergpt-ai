@@ -27,6 +27,10 @@ import {
   SupportedLanguage,
   formatTemperature,
   formatWindSpeed,
+  t,
+  translateCondition,
+  translateRiskCategory,
+  translateDay,
 } from '../../i18n';
 
 interface DashboardViewProps {
@@ -52,7 +56,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   error,
   activeModel,
   currentMode,
-  currentLang: _currentLang,
+  currentLang,
   onSelectHub,
   onSelectModel,
   onSelectMode,
@@ -191,7 +195,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm text-slate-700 dark:text-slate-300">
           <span className="material-symbols-outlined text-emerald-600 text-[18px]">hub</span>
           <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Synoptic Hubs:
+            {t('telemetry.synoptic_hubs', currentLang, 'Synoptic Hubs')}:
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -290,7 +294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 hover:scale-105 active:scale-95 text-white text-xs font-semibold shadow-sm hover:shadow-md transition-all cursor-pointer"
                   >
                     <span className="material-symbols-outlined text-[16px] text-white animate-pulse">mic</span>
-                    <span>Voice Query</span>
+                    <span>{t('dashboard.voice_query', currentLang, 'Voice Query')}</span>
                   </button>
                 )}
 
@@ -300,7 +304,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   title="Toggle S-Band Doppler Radar Console"
                 >
                   <Layers className="h-3.5 w-3.5 text-secondary" />
-                  <span>{showRadar ? 'Hide Radar' : 'Doppler Radar'}</span>
+                  <span>{showRadar ? t('telemetry.hide_radar', currentLang, 'Hide Radar') : t('telemetry.doppler_radar', currentLang, 'Doppler Radar')}</span>
                 </button>
               </div>
             </div>
@@ -320,7 +324,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       : 'partly_cloudy_day'}
                   </span>
                   <span className="absolute -bottom-2 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-sm uppercase tracking-wider">
-                    {current.condition.split(' ')[0] || 'Synoptic'}
+                    {translateCondition(current.condition, currentLang).split(' ')[0] || 'Synoptic'}
                   </span>
                 </div>
 
@@ -333,7 +337,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="font-display font-bold text-slate-800 dark:text-slate-200 text-base">
-                      {current.condition || 'Overcast Clouds'}
+                      {translateCondition(current.condition, currentLang) || current.condition || 'Overcast Clouds'}
                     </span>
                     <span className="font-mono text-xs text-slate-400 font-medium">
                       ({current.rain_probability > 0 ? `${current.rain_probability}% Rain Deck` : 'Stable Deck'})
@@ -353,7 +357,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-amber-500 text-[17px]">thermostat</span>
-                    Feels Like
+                    {t('dashboard.feels_like', currentLang, 'Feels Like')}
                   </span>
                   <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                     {formatTemperature(current.feels_like)}
@@ -363,7 +367,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sky-500 text-[17px]">water_drop</span>
-                    Humidity
+                    {t('dashboard.humidity', currentLang, 'Humidity')}
                   </span>
                   <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                     {current.humidity}%
@@ -373,7 +377,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-emerald-500 text-[17px]">rainy</span>
-                    Precip Chance
+                    {t('dashboard.precipitation', currentLang, 'Precip Chance')}
                   </span>
                   <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400">
                     {current.rain_probability}%
@@ -383,7 +387,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-2xs hover:scale-[1.02] hover:border-slate-300 transition-all duration-200">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-purple-500 text-[17px]">compress</span>
-                    Dew Point
+                    {t('telemetry.dew_point', currentLang, 'Dew Point')}
                   </span>
                   <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                     {Math.round(current.temp - ((100 - current.humidity) / 5))}°C
@@ -398,7 +402,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="metric-card p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">
-                    Barometer
+                    {t('telemetry.atm_pressure', currentLang, 'Barometer')}
                   </span>
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-600 text-[16px] transition-transform group-hover:rotate-45">
                     speed
@@ -412,7 +416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                   <span className="material-symbols-outlined text-[14px]">trending_flat</span>
-                  <span>Steady Trend</span>
+                  <span>{t('telemetry.steady_trend', currentLang, 'Steady Trend')}</span>
                 </div>
               </div>
 
@@ -420,7 +424,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="metric-card p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">
-                    Visibility
+                    {t('dashboard.visibility', currentLang, 'Visibility')}
                   </span>
                   <span className="material-symbols-outlined text-slate-400 group-hover:text-emerald-600 text-[16px] transition-transform group-hover:scale-110">
                     visibility
@@ -434,7 +438,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
                 <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                   <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                  <span>Clear Horizon</span>
+                  <span>{t('telemetry.clear_horizon', currentLang, 'Clear Horizon')}</span>
                 </div>
               </div>
 
@@ -442,7 +446,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="metric-card p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-amber-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-amber-700 uppercase tracking-wider transition-colors">
-                    Solar UV
+                    {t('telemetry.solar_uv', currentLang, 'Solar UV')}
                   </span>
                   <span className="material-symbols-outlined text-amber-500 group-hover:scale-110 text-[16px] transition-transform">
                     sunny
@@ -463,7 +467,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="metric-card p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm flex flex-col gap-1 hover:scale-[1.02] hover:border-emerald-400 hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] font-bold text-slate-400 group-hover:text-emerald-700 uppercase tracking-wider transition-colors">
-                    AQI (CPCB)
+                    {t('dashboard.air_quality', currentLang, 'AQI (CPCB)')}
                   </span>
                   <span className="material-symbols-outlined text-emerald-500 group-hover:scale-110 text-[16px] transition-transform">
                     air
@@ -620,9 +624,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Mode Selector Switcher */}
               <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 gap-1">
                 {[
-                  { id: 'farmer', label: 'Kisan / Agri', emoji: '🌾' },
-                  { id: 'aviation', label: 'Aviation Synoptic', emoji: '✈️' },
-                  { id: 'smartcity', label: 'Smart City', emoji: '🏙️' },
+                  { id: 'farmer', label: t('modes.pill_farmer', currentLang, '🌾 Kisan / Agri') },
+                  { id: 'aviation', label: t('modes.pill_aviation', currentLang, '✈️ Aviation Synoptic') },
+                  { id: 'smartcity', label: t('modes.pill_smartcity', currentLang, '🏙️ Smart City') },
                 ].map((mode) => (
                   <button
                     key={mode.id}
@@ -633,7 +637,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'
                     }`}
                   >
-                    <span>{mode.emoji}</span>
                     <span>{mode.label}</span>
                   </button>
                 ))}
@@ -676,13 +679,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </span>
                 </div>
                 <h2 className="font-display font-bold text-xl text-slate-900 dark:text-white tracking-tight">
-                  Day-Wise Forecast &amp; Meteorological Inspection
+                  {t('dashboard.forecast_7day', currentLang, 'Day-Wise Forecast & Meteorological Inspection')}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-500 font-medium">Selected Frame:</span>
                 <span className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-mono text-xs font-bold transition-all">
-                  {selectedDay.day} ({formatTemperature(selectedDay.temp)} / {selectedDay.risk_level || 'Low Risk'})
+                  {translateDay(selectedDay.day, currentLang)} ({formatTemperature(selectedDay.temp)} / {translateRiskCategory(selectedDay.risk_level || 'Low Risk', currentLang)})
                 </span>
               </div>
             </div>
@@ -715,7 +718,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         isSelected ? 'text-emerald-400' : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
-                      {dayItem.day}
+                      {translateDay(dayItem.day, currentLang)}
                     </span>
                     <span className={`text-2xl my-1 ${isSelected ? 'animate-float' : ''}`}>
                       {dayItem.icon || '⛅'}
@@ -739,7 +742,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         isSelected ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30' : riskBadgeColor
                       }`}
                     >
-                      {dayItem.risk_level || 'Low Risk'}
+                      {translateRiskCategory(dayItem.risk_level || 'Low Risk', currentLang)}
                     </span>
                   </button>
                 );
@@ -752,12 +755,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">
-                      {selectedDay.day} • 12-Hour Micro Synoptic
+                      {translateDay(selectedDay.day, currentLang)} • 12-Hour Micro Synoptic
                     </span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   </div>
                   <span className="font-display font-bold text-lg text-slate-900 dark:text-white">
-                    {selectedDay.condition || 'Partly Cloudy'} (High: {selectedDay.temp_max ?? Math.round(selectedDay.temp + 4)}°C | Low:{' '}
+                    {translateCondition(selectedDay.condition, currentLang) || selectedDay.condition || 'Partly Cloudy'} (High: {selectedDay.temp_max ?? Math.round(selectedDay.temp + 4)}°C | Low:{' '}
                     {selectedDay.temp_min ?? Math.round(selectedDay.temp - 4)}°C)
                   </span>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -772,7 +775,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       wb_twilight
                     </span>
                     <div className="flex flex-col">
-                      <span className="font-mono text-[10px] text-slate-400 uppercase">Sunrise</span>
+                      <span className="font-mono text-[10px] text-slate-400 uppercase">{t('dashboard.sunrise', currentLang, 'Sunrise')}</span>
                       <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                         {current.sunrise || '06:15 AM'}
                       </span>
@@ -784,7 +787,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       bedtime
                     </span>
                     <div className="flex flex-col">
-                      <span className="font-mono text-[10px] text-slate-400 uppercase">Sunset</span>
+                      <span className="font-mono text-[10px] text-slate-400 uppercase">{t('dashboard.sunset', currentLang, 'Sunset')}</span>
                       <span className="font-mono font-bold text-xs text-slate-900 dark:text-white">
                         {current.sunset || '06:45 PM'}
                       </span>
@@ -799,11 +802,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="material-symbols-outlined text-slate-500 text-[16px]">show_chart</span>
                     <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                      Diurnal Precipitation &amp; Thermal Vector
+                      {t('dashboard.hourly_forecast', currentLang, 'Diurnal Precipitation & Thermal Vector')}
                     </span>
                   </div>
                   <span className="font-mono text-[11px] text-slate-400">
-                    Hourly Consensus Interpolation (00:00 - 23:00 IST)
+                    {t('telemetry.diurnal_forecast', currentLang, 'Hourly Consensus Interpolation (00:00 - 23:00 IST)')}
                   </span>
                 </div>
 
@@ -857,7 +860,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     <span className="material-symbols-outlined text-[20px]">camera_enhance</span>
                   </div>
                   <div>
-                    <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">Photo Weather Intelligence</h3>
+                    <h3 className="font-display font-bold text-sm text-slate-900 dark:text-white">{t('nav.photo_ai', currentLang, 'Photo Weather Intelligence')}</h3>
                     <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-wider uppercase">
                       Multimodal Copilot
                     </span>
@@ -885,7 +888,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-800 dark:text-white block group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
-                      Drop Sky Snapshot Here
+                      {t('telemetry.drop_sky', currentLang, 'Drop Sky Snapshot Here')}
                     </span>
                     <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400 font-medium">JPG, PNG, HEIC up to 25MB</span>
                   </div>
@@ -911,7 +914,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className="relative overflow-hidden w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] transition-all group cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[18px] group-hover:rotate-12 transition-transform">photo_camera</span>
-                <span>Analyze a Photo</span>
+                <span>{t('telemetry.analyze_photo', currentLang, 'Analyze a Photo')}</span>
                 <span className="material-symbols-outlined text-[16px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </Link>
             </div>
@@ -923,15 +926,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <span className="font-mono text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Operational Safety Index
+                    {t('telemetry.operational_safety', currentLang, 'Operational Safety Index')}
                   </span>
                   <h3 className="font-display font-bold text-base text-slate-900 dark:text-white">
-                    AI Meteorological Risk Score
+                    {t('risk.title', currentLang, 'AI Meteorological Risk Score')}
                   </h3>
                 </div>
                 <span className="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-mono text-xs font-bold border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                  {risk?.category || 'Low Risk'}
+                  {translateRiskCategory(risk?.category || 'Low Risk', currentLang)}
                 </span>
               </div>
 
@@ -960,7 +963,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       / 100
                     </span>
                     <span className="font-mono text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full mt-1.5 border border-emerald-200/60 dark:border-emerald-800 shadow-2xs">
-                      {riskLabel}
+                      {translateRiskCategory(riskLabel, currentLang)}
                     </span>
                   </div>
                 </div>
@@ -972,7 +975,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
                       <span className="material-symbols-outlined text-emerald-600 text-[16px]">rainy</span>
-                      Precipitation Rate
+                      {t('telemetry.precip_rate', currentLang, 'Precipitation Rate')}
                     </span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                       +{Math.min(30, Math.round(current.rain_probability * 0.35))} (Light)
@@ -990,7 +993,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
                       <span className="material-symbols-outlined text-amber-500 text-[16px]">air</span>
-                      Wind Gusts &amp; Shear
+                      {t('telemetry.wind_gusts', currentLang, 'Wind Gusts & Shear')}
                     </span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                       +{Math.min(25, Math.round(current.wind_speed * 0.8))} (Mild)
@@ -1008,7 +1011,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-600 dark:text-slate-300 flex items-center gap-1.5 font-medium">
                       <span className="material-symbols-outlined text-sky-500 text-[16px]">water_drop</span>
-                      Atmospheric Moisture
+                      {t('telemetry.atmospheric_moisture', currentLang, 'Atmospheric Moisture')}
                     </span>
                     <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
                       +{Math.min(20, Math.round(current.humidity * 0.15))} ({current.humidity}%)
@@ -1038,7 +1041,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <span className="material-symbols-outlined text-[20px]">smart_toy</span>
                 </div>
                 <div>
-                  <span className="font-display font-bold text-sm block">Ask WeatherGPT</span>
+                  <span className="font-display font-bold text-sm block">{t('telemetry.ask_weathergpt', currentLang, 'Ask WeatherGPT')}</span>
                   <span className="font-mono text-[11px] text-emerald-300">Synoptic reasoning ready</span>
                 </div>
               </div>
@@ -1058,14 +1061,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 type="text"
                 value={promptInput}
                 onChange={(e) => setPromptInput(e.target.value)}
-                placeholder={`Ask about ${activeWeather.location.split(',')[0]} forecast, rain window, or risk...`}
+                placeholder={t('placeholder_chat', currentLang, `Ask about ${activeWeather.location.split(',')[0]} forecast, rain window, or risk...`)}
                 className="bg-transparent border-0 outline-none text-xs text-white placeholder:text-slate-400 px-2 w-full font-medium"
               />
               <button
                 type="submit"
                 className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shrink-0 transition-all cursor-pointer"
               >
-                <span>Query</span>
+                <span>{t('telemetry.query_btn', currentLang, 'Query')}</span>
                 <Send className="h-3 w-3" />
               </button>
             </form>

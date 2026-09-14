@@ -19,21 +19,23 @@ import paCommon from './locales/pa/common.json';
 export * from './types';
 export * from './config';
 export * from './modalTranslations';
+export * from './telemetryTranslations';
 
 import { getModalStrings } from './modalTranslations';
+import { getTelemetryStrings } from './telemetryTranslations';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const LOCALES: Record<SupportedLanguage, any> = {
-  en: { ...enCommon, ...getModalStrings('en') },
-  hi: { ...hiCommon, ...getModalStrings('hi') },
-  mr: { ...mrCommon, ...getModalStrings('mr') },
-  ta: { ...taCommon, ...getModalStrings('ta') },
-  te: { ...teCommon, ...getModalStrings('te') },
-  bn: { ...bnCommon, ...getModalStrings('bn') },
-  gu: { ...guCommon, ...getModalStrings('gu') },
-  kn: { ...knCommon, ...getModalStrings('kn') },
-  ml: { ...mlCommon, ...getModalStrings('ml') },
-  pa: { ...paCommon, ...getModalStrings('pa') },
+  en: { ...enCommon, ...getModalStrings('en'), ...getTelemetryStrings('en') },
+  hi: { ...hiCommon, ...getModalStrings('hi'), ...getTelemetryStrings('hi') },
+  mr: { ...mrCommon, ...getModalStrings('mr'), ...getTelemetryStrings('mr') },
+  ta: { ...taCommon, ...getModalStrings('ta'), ...getTelemetryStrings('ta') },
+  te: { ...teCommon, ...getModalStrings('te'), ...getTelemetryStrings('te') },
+  bn: { ...bnCommon, ...getModalStrings('bn'), ...getTelemetryStrings('bn') },
+  gu: { ...guCommon, ...getModalStrings('gu'), ...getTelemetryStrings('gu') },
+  kn: { ...knCommon, ...getModalStrings('kn'), ...getTelemetryStrings('kn') },
+  ml: { ...mlCommon, ...getModalStrings('ml'), ...getTelemetryStrings('ml') },
+  pa: { ...paCommon, ...getModalStrings('pa'), ...getTelemetryStrings('pa') },
 };
 
 // Backward-compatible dictionary export

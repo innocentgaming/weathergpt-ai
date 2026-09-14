@@ -38,8 +38,10 @@ import {
 import { DEFAULT_LOCATION } from './constants/location';
 import {
   SupportedLanguage,
+  SUPPORTED_LANGUAGES,
   getSavedLanguage,
   saveLanguagePreference,
+  t,
 } from './i18n';
 
 import { ThemeToggle } from './components/ThemeToggle';
@@ -197,11 +199,11 @@ export default function WeatherGPTApp() {
             </span>
             <nav className="flex flex-col gap-1">
               {[
-                { id: 'dashboard', label: 'Live Telemetry', icon: 'sensors' },
-                { id: 'map', label: 'Radar & Maps', icon: 'radar' },
-                { id: 'route', label: 'Route Intel', icon: 'alt_route' },
-                { id: 'alerts', label: 'Severe Alerts', icon: 'warning' },
-                { id: 'settings', label: 'System Settings', icon: 'tune' },
+                { id: 'dashboard', label: t('nav.dashboard', currentLang, 'Live Telemetry'), icon: 'sensors' },
+                { id: 'map', label: t('nav.map', currentLang, 'Radar & Maps'), icon: 'radar' },
+                { id: 'route', label: t('nav.route', currentLang, 'Route Intel'), icon: 'alt_route' },
+                { id: 'alerts', label: t('nav.alerts', currentLang, 'Severe Alerts'), icon: 'warning' },
+                { id: 'settings', label: t('nav.settings', currentLang, 'System Settings'), icon: 'tune' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -243,13 +245,13 @@ export default function WeatherGPTApp() {
           {/* Operational Modes Rail */}
           <div className="pt-6">
             <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">
-              Live Vector Engines
+              {t('modes.title', currentLang, 'Live Vector Engines')}
             </span>
             <div className="space-y-1.5">
               {[
-                { id: 'farmer', label: 'Kisan / Agri Synoptic', icon: 'agriculture', tag: 'active-ping', color: 'emerald' },
-                { id: 'aviation', label: 'Aviation Synoptic', icon: 'flight', tag: 'FL350', color: 'sky' },
-                { id: 'smartcity', label: 'Smart City Matrix', icon: 'location_city', tag: 'METRO', color: 'cyan' },
+                { id: 'farmer', label: t('modes.farmer', currentLang, '🌾 Farmer / Agri Advisory'), icon: 'agriculture', tag: 'active-ping', color: 'emerald' },
+                { id: 'aviation', label: t('modes.aviation', currentLang, '✈️ Aviation Synoptic'), icon: 'flight', tag: 'FL350', color: 'sky' },
+                { id: 'smartcity', label: t('modes.smartcity', currentLang, '🏙️ Smart City Matrix'), icon: 'location_city', tag: 'METRO', color: 'cyan' },
               ].map((m) => (
                 <button
                   key={m.id}
@@ -290,7 +292,7 @@ export default function WeatherGPTApp() {
           {/* Advanced Tools */}
           <div className="pt-6">
             <span className="font-mono text-[10px] uppercase font-bold text-slate-400 tracking-wider px-2 block mb-2">
-              Advanced Intelligence Tools
+              {t('nav.advanced_tools', currentLang, 'Advanced Intelligence Tools')}
             </span>
             <div className="flex flex-col gap-1">
               <button
@@ -298,28 +300,28 @@ export default function WeatherGPTApp() {
                 className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-500 hover:bg-rose-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">cyclone</span>
-                <span>Disaster Simulator</span>
+                <span>{t('nav.disaster_sim', currentLang, 'Disaster Simulator')}</span>
               </button>
               <button
                 onClick={() => setEmergencyModalOpen(true)}
                 className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-600/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">phone_in_talk</span>
-                <span>Emergency Center</span>
+                <span>{t('nav.emergency_center', currentLang, 'Emergency Center')}</span>
               </button>
               <button
                 onClick={() => setClimateModalOpen(true)}
                 className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
-                <span>Climate Insights</span>
+                <span>{t('nav.climate_insights', currentLang, 'Climate Insights')}</span>
               </button>
               <button
                 onClick={() => setReportModalOpen(true)}
                 className="flex w-full items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">description</span>
-                <span>Export Report</span>
+                <span>{t('nav.export_report', currentLang, 'Export Report')}</span>
               </button>
             </div>
           </div>
@@ -332,7 +334,7 @@ export default function WeatherGPTApp() {
             <span className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center material-symbols-outlined text-[17px]">
               center_focus_weak
             </span>
-            <span className="font-display font-semibold text-xs tracking-tight text-white">Photo Weather AI</span>
+            <span className="font-display font-semibold text-xs tracking-tight text-white">{t('nav.photo_ai', currentLang, 'Photo Weather AI')}</span>
           </div>
           <p className="text-[11px] text-slate-300 leading-relaxed mb-3">
             Upload sky snapshots for barometric &amp; cloud genus classification.
@@ -342,7 +344,7 @@ export default function WeatherGPTApp() {
             className="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 hover:scale-[1.02] active:scale-[0.98] text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
             <span className="material-symbols-outlined text-[16px]">add_a_photo</span>
-            <span>Analyze Sky Snap</span>
+            <span>{t('telemetry.analyze_photo', currentLang, 'Analyze Sky Snap')}</span>
           </Link>
         </div>
       </aside>
@@ -364,7 +366,7 @@ export default function WeatherGPTApp() {
                     changeLocation(searchLocation);
                   }
                 }}
-                placeholder="Search Observatory, AWS Station, City (e.g., Pune, IMD-411005)..."
+                placeholder={t('placeholder_search', currentLang, 'Search Observatory, AWS Station, City (e.g., Pune, IMD-411005)...')}
                 className="bg-transparent border-0 outline-none w-full text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 font-medium"
               />
               <button
@@ -374,7 +376,7 @@ export default function WeatherGPTApp() {
                 className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 shadow-sm border border-slate-200 dark:border-slate-600 text-[11px] font-mono font-medium hover:text-emerald-700 dark:hover:text-emerald-400 hover:border-emerald-300 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
                 <span className="material-symbols-outlined text-[14px] text-emerald-600 dark:text-emerald-400">my_location</span>
-                <span>GPS</span>
+                <span>{t('gps_location', currentLang, 'GPS')}</span>
               </button>
             </div>
           </div>
@@ -400,13 +402,15 @@ export default function WeatherGPTApp() {
                 onChange={(e) => handleLanguageChange(e.target.value as SupportedLanguage)}
                 className="bg-transparent border-0 outline-none text-xs font-semibold cursor-pointer pr-1 text-slate-800 dark:text-slate-100"
               >
-                <option value="en" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">EN (English)</option>
-                <option value="hi" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">HI (हिंदी)</option>
-                <option value="mr" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">MR (मराठी)</option>
-                <option value="ta" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">TA (தமிழ்)</option>
-                <option value="kn" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">KN (ಕನ್ನಡ)</option>
-                <option value="bn" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">BN (বাংলা)</option>
-                <option value="pa" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">PA (ਪੰਜਾਬੀ)</option>
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option
+                    key={lang.code}
+                    value={lang.code}
+                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100"
+                  >
+                    {lang.code.toUpperCase()} ({lang.name})
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -438,11 +442,11 @@ export default function WeatherGPTApp() {
 
         {/* Mobile Navigation Strip */}
         <div className="md:hidden flex bg-surface-container-lowest border-b border-surface-container-high p-2 overflow-x-auto whitespace-nowrap select-none shrink-0">
-          <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'dashboard' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>Live Telemetry</button>
-          <button onClick={() => setActiveTab('map')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'map' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>Radar &amp; Maps</button>
-          <button onClick={() => setActiveTab('route')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'route' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>Route Intel</button>
-          <button onClick={() => setActiveTab('alerts')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'alerts' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>Severe Alerts</button>
-          <button onClick={() => setActiveTab('settings')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'settings' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>Settings</button>
+          <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'dashboard' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>{t('nav.dashboard', currentLang, 'Live Telemetry')}</button>
+          <button onClick={() => setActiveTab('map')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'map' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>{t('nav.map', currentLang, 'Radar & Maps')}</button>
+          <button onClick={() => setActiveTab('route')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'route' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>{t('nav.route', currentLang, 'Route Intel')}</button>
+          <button onClick={() => setActiveTab('alerts')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'alerts' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>{t('nav.alerts', currentLang, 'Severe Alerts')}</button>
+          <button onClick={() => setActiveTab('settings')} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${activeTab === 'settings' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}>{t('nav.settings', currentLang, 'Settings')}</button>
         </div>
 
         {/* Dynamic Main View Router */}
@@ -485,7 +489,7 @@ export default function WeatherGPTApp() {
           )}
 
           {activeTab === 'route' && (
-            <RouteView initialFrom={weather?.location || 'Nashik'} initialTo="Mumbai" />
+            <RouteView initialFrom={weather?.location || 'Nashik'} initialTo="Mumbai" currentLang={currentLang} />
           )}
 
           {activeTab === 'alerts' && (
@@ -495,6 +499,7 @@ export default function WeatherGPTApp() {
               error={weatherError}
               onRefresh={refreshWeather}
               onOpenEmergencyModal={() => setEmergencyModalOpen(true)}
+              currentLang={currentLang}
             />
           )}
 

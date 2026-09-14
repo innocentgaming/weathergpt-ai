@@ -15,16 +15,18 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { RouteAnalysisData } from '../../lib/types';
-import { formatTemperature } from '../../i18n';
+import { formatTemperature, SupportedLanguage, t } from '../../i18n';
 
 interface RouteViewProps {
   initialFrom?: string;
   initialTo?: string;
+  currentLang?: SupportedLanguage;
 }
 
 export const RouteView: React.FC<RouteViewProps> = ({
   initialFrom = 'Nashik',
   initialTo = 'Mumbai',
+  currentLang = 'en',
 }) => {
   const [fromLocation, setFromLocation] = useState<string>(initialFrom);
   const [toLocation, setToLocation] = useState<string>(initialTo);

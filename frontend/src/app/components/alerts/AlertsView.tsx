@@ -13,6 +13,7 @@ import {
   Info,
 } from 'lucide-react';
 import { WeatherData } from '../../lib/types';
+import { SupportedLanguage, t } from '../../i18n';
 
 interface AlertsViewProps {
   weather: WeatherData | null;
@@ -20,6 +21,7 @@ interface AlertsViewProps {
   error: string | null;
   onRefresh: () => void;
   onOpenEmergencyModal?: () => void;
+  currentLang?: SupportedLanguage;
 }
 
 export const AlertsView: React.FC<AlertsViewProps> = ({
@@ -28,6 +30,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
   error,
   onRefresh,
   onOpenEmergencyModal,
+  currentLang = 'en',
 }) => {
   if (loading && !weather) {
     return (
@@ -85,7 +88,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
               className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
             >
               <PhoneCall className="h-3.5 w-3.5" />
-              <span>Emergency Center</span>
+              <span>{t('nav.emergency_center', currentLang, 'Emergency Center')}</span>
             </button>
           )}
           <button
@@ -104,9 +107,9 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
           <div className="w-16 h-16 rounded-full bg-primary-fixed/40 text-primary flex items-center justify-center mb-3">
             <CheckCircle2 className="h-8 w-8" />
           </div>
-          <h3 className="font-headline-sm text-lg font-bold text-on-surface">No Active Severe Alerts</h3>
+          <h3 className="font-headline-sm text-lg font-bold text-on-surface">{t('alerts.no_active', currentLang, 'No Active Severe Alerts')}</h3>
           <p className="font-body-sm text-sm text-on-surface-variant max-w-md mt-1">
-            Current atmospheric conditions across {weather?.location || 'this location'} are stable. No active red, orange, or cyclone warnings are issued by IMD.
+            {t('alerts.clear_area', currentLang, 'Atmospheric telemetry normal. No severe meteorological hazards detected.')}
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <span className="px-3 py-1 rounded-full bg-surface-container-low text-on-surface font-label-mono-sm text-xs border border-surface-container-high">
