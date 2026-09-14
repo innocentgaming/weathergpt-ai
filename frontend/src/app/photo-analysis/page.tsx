@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Camera,
@@ -15,7 +15,9 @@ import {
   Info,
   RefreshCw,
   Compass,
-  Globe
+  Globe,
+  X,
+  FlipHorizontal
 } from 'lucide-react';
 import { ThemeToggle } from '../components/ThemeToggle';
 
@@ -111,6 +113,139 @@ export default function PhotoAnalysisPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Live Camera Viewfinder State
+  const [isCameraOpen, setIsCameraOpen] = useState<boolean>(false);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const [cameraLoading, setCameraLoading] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+
+  // Stop camera tracks cleanly on component unmount
+  useEffect(() => {
+    return () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [mediaStream]);
+
+  // Start Camera Stream
+  const startCamera = async (targetFacing: 'environment' | 'user' = facingMode) => {
+    setIsCameraOpen(true);
+    setCameraLoading(true);
+    setCameraError(null);
+
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((t) => t.stop());
+      setMediaStream(null);
+    }
+
+    try {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        throw new Error('Your browser does not support live camera streaming. Please use the device camera file picker.');
+      }
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: targetFacing },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+      } catch (modeErr) {
+        console.warn(`Could not open camera with facingMode=${targetFacing}, falling back to default webcam:`, modeErr);
+        // Fallback for laptop front webcams where facingMode 'environment' fails
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        });
+      }
+
+      setMediaStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        try {
+          await videoRef.current.play();
+        } catch (playErr) {
+          console.warn('Video play warning:', playErr);
+        }
+      }
+    } catch (err: unknown) {
+      console.error('Camera stream initialization error:', err);
+      const msg = err instanceof Error ? err.message : 'Camera access was denied or is unavailable on this device.';
+      setCameraError(msg);
+    } finally {
+      setCameraLoading(false);
+    }
+  };
+
+  // Stop Camera Stream
+  const stopCamera = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach((t) => t.stop());
+      setMediaStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraOpen(false);
+    setCameraError(null);
+    setCameraLoading(false);
+  };
+
+  // Capture Photo Frame from Video
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setCameraError('Camera stream is still starting. Please try in a moment.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCameraError('Failed to capture snapshot from camera.');
+          return;
+        }
+        const capturedFile = new File([blob], `weather-lens-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        handleFileChange(capturedFile);
+        stopCamera();
+      },
+      'image/jpeg',
+      0.95
+    );
+  };
+
+  // Toggle between front and rear cameras
+  const toggleFacingMode = () => {
+    const next = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(next);
+    startCamera(next);
+  };
+
+  // User clicked "Take Photo" button
+  const handleTakePhotoClick = () => {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+      startCamera(facingMode);
+    } else {
+      cameraInputRef.current?.click();
+    }
+  };
 
   // Handle Image Selection
   const handleFileChange = (file: File) => {
@@ -305,11 +440,11 @@ export default function PhotoAnalysisPage() {
               </button>
               <button
                 type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-semibold text-slate-200 transition"
+                onClick={handleTakePhotoClick}
+                className="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-semibold text-slate-200 transition hover:border-cyan-500/50 active:scale-[0.98] cursor-pointer shadow-xs"
               >
                 <Camera className="h-4 w-4 text-cyan-400" />
-                Take Photo
+                {t('take_btn', currentLang, 'Take Photo')}
               </button>
             </div>
 
@@ -665,6 +800,161 @@ export default function PhotoAnalysisPage() {
           )}
         </div>
       </div>
+      {/* Live Camera Viewfinder Modal */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg rounded-3xl border border-cyan-500/30 bg-slate-900 text-white shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/80 px-5 py-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Camera className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
+                    Live Atmospheric Camera
+                    <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      LIVE
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Aim camera toward the sky, clouds, or horizon</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+                aria-label="Close Camera"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Viewport Box */}
+            <div className="relative bg-black flex items-center justify-center min-h-[340px] sm:min-h-[400px] overflow-hidden">
+              {/* Video Stream Element */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover max-h-[60vh]"
+              />
+
+              {/* HUD Reticle Overlay */}
+              {!cameraError && !cameraLoading && (
+                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-6">
+                  {/* Top Target Instruction */}
+                  <div className="px-3 py-1 rounded-full bg-slate-950/70 border border-cyan-500/30 text-[10px] font-mono text-cyan-300 backdrop-blur-xs flex items-center gap-1.5 shadow-sm">
+                    <Sparkles className="h-3 w-3 text-cyan-400" />
+                    ALIGN HORIZON OR CLOUD PATTERN IN FRAME
+                  </div>
+
+                  {/* Center Reticle */}
+                  <div className="relative w-40 h-40 border border-cyan-400/40 rounded-3xl flex items-center justify-center shadow-lg shadow-cyan-500/10">
+                    <div className="w-2 h-2 rounded-full bg-cyan-400/80"></div>
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-cyan-400"></div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-cyan-400"></div>
+                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-0.5 h-5 bg-cyan-400"></div>
+                    <div className="absolute top-1/2 -right-1 -translate-y-1/2 w-0.5 h-5 bg-cyan-400"></div>
+                  </div>
+
+                  {/* Sensor Status */}
+                  <div className="text-[10px] font-mono text-slate-400 bg-slate-950/70 px-3 py-1 rounded-md backdrop-blur-xs border border-slate-800">
+                    MULTIMODAL OPTICAL TELEMETRY ACTIVE
+                  </div>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {cameraLoading && (
+                <div className="absolute inset-0 bg-slate-950/80 flex flex-col items-center justify-center gap-3">
+                  <RefreshCw className="h-8 w-8 text-cyan-400 animate-spin" />
+                  <p className="text-xs font-semibold text-slate-300">Initializing Optical Sensor...</p>
+                </div>
+              )}
+
+              {/* Error State with Fallback Actions */}
+              {cameraError && (
+                <div className="absolute inset-0 bg-slate-950/95 p-6 flex flex-col items-center justify-center text-center space-y-4">
+                  <div className="p-3.5 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    <AlertTriangle className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-200 mb-1">Camera Access Issue</h4>
+                    <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+                      {cameraError.includes('denied') || cameraError.includes('NotAllowedError') || cameraError.includes('Permission')
+                        ? 'Camera permission was not granted by your browser. Please allow camera access in browser settings, or choose one of the options below.'
+                        : cameraError}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2.5 w-full max-w-xs pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopCamera();
+                        cameraInputRef.current?.click();
+                      }}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      Device Camera
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        stopCamera();
+                        fileInputRef.current?.click();
+                      }}
+                      className="flex-1 py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Upload className="h-3.5 w-3.5 text-emerald-400" />
+                      Browse Files
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Controls Footer */}
+            <div className="border-t border-slate-800 bg-slate-950/90 px-6 py-4 flex items-center justify-between">
+              {/* Flip camera facing button */}
+              <button
+                type="button"
+                onClick={toggleFacingMode}
+                disabled={cameraLoading || !!cameraError}
+                className="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer disabled:opacity-40"
+                title="Switch Camera (Front / Back)"
+              >
+                <FlipHorizontal className="h-5 w-5" />
+              </button>
+
+              {/* Shutter Button */}
+              <button
+                type="button"
+                onClick={capturePhoto}
+                disabled={cameraLoading || !!cameraError}
+                className="group relative p-1.5 rounded-full bg-cyan-500/20 border-2 border-cyan-400 transition hover:scale-105 active:scale-95 disabled:opacity-40 cursor-pointer shadow-lg shadow-cyan-500/20"
+                title="Capture Photo"
+              >
+                <div className="w-14 h-14 rounded-full bg-cyan-500 group-hover:bg-cyan-400 flex items-center justify-center transition shadow-inner">
+                  <Camera className="h-6 w-6 text-slate-950" />
+                </div>
+              </button>
+
+              {/* Cancel Button */}
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white transition cursor-pointer border border-slate-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
